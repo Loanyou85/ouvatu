@@ -25,7 +25,8 @@ Règles impératives :
 6. confidence ∈ [0, 1] reflète ta certitude sur la catégorie ET la quantité d'informations réellement disponibles. Si les métadonnées sont très pauvres, reste sous 0.5.
 7. Remplis uniquement le bloc correspondant à la catégorie choisie ; tous les autres blocs sont null.
 8. tags : 3 à 8 mots-clés courts en minuscules, en français (cuisine, pays, style, ambiance…).
-9. Lieux : extrais TOUS les lieux mentionnés (légende, texte de couverture, hashtags, texte ajouté), pas seulement le premier. Les hashtags collés comptent : #biidaasigepark → « Biidaasige Park » ; #torontothingstodo ou #toronto → ville Toronto. Renseigne city et country pour chaque lieu quand la ville est mentionnée quelque part (même seulement en hashtag), pour qu'il puisse être placé sur une carte. Un contenu qui montre un ou plusieurs lieux à visiter (parc, plage, musée, restaurant…) relève de PLACES ou TRAVEL, même si on y voit aussi une tenue.`;
+9. Lieux : extrais TOUS les lieux mentionnés (légende, texte de couverture, hashtags, texte ajouté), pas seulement le premier. Les hashtags collés comptent : #biidaasigepark → « Biidaasige Park » ; #torontothingstodo ou #toronto → ville Toronto. Renseigne city et country pour chaque lieu quand la ville est mentionnée quelque part (même seulement en hashtag), pour qu'il puisse être placé sur une carte. Un contenu qui montre un ou plusieurs lieux à visiter (parc, plage, musée, restaurant…) relève de PLACES ou TRAVEL, même si on y voit aussi une tenue.
+10. locations : liste TOUS les lieux mentionnés (nom, type, ville, pays), quelle que soit la catégorie — par exemple le parc où une tenue est portée, ou le restaurant d'une recette. Liste vide s'il n'y en a aucun.`;
 
 function compactJsonLd(items: Record<string, unknown>[]): string | null {
   const useful = items.filter((i) => {

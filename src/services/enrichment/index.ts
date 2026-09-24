@@ -100,6 +100,7 @@ export async function enrichResult(result: AnalysisResult): Promise<AnalysisResu
   const tasks: Promise<void>[] = [enrichBooks(enriched), enrichScreen(enriched)];
   if (d.category === "TRAVEL") tasks.push(geocodePlaces(d.travel.places, d.travel.destination ?? d.travel.cities[0] ?? null, d.travel.country));
   if (d.category === "PLACES") tasks.push(geocodePlaces(d.places.places, d.places.city, d.places.country));
+  if (enriched.locations.length) tasks.push(geocodePlaces(enriched.locations, null, null));
   // Enrichment is best-effort: never let it fail or stall the analysis.
   await Promise.race([Promise.allSettled(tasks), sleep(25_000)]);
   return enriched;

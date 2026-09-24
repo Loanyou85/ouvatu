@@ -36,6 +36,7 @@ const empty: Omit<AiEnvelope, "category" | "confidence" | "title" | "summary" | 
   decor: null,
   fitness: null,
   other: null,
+  locations: [],
 };
 
 describe("heuristic analyzer", () => {

@@ -142,7 +142,7 @@ export class LocalUserStore implements UserDataStore {
       tags: input.tags,
       entities: input.entities,
       data: input.data,
-      userData: {},
+      userData: input.userData ?? {},
       isSaved: input.isSaved ?? false,
       isFavorite: false,
       isExample: input.isExample ?? false,

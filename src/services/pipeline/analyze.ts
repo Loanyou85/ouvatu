@@ -107,7 +107,10 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
     }
 
     let provider = getAnalysisProvider();
-    let aiError: string | null = null;
+    let aiError: string | null =
+      provider.name === "heuristic" && env.aiProvider !== "heuristic"
+        ? "AI_API_KEY absente sur le serveur (Vercel → Settings → Environment Variables, puis Redeploy)"
+        : null;
     let validated;
     try {
       validated = envelopeToResult(await provider.analyze(content));
@@ -116,7 +119,7 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
       // the rule-based analyzer still builds a card from the same public data.
       const recoverable = error instanceof AnalysisError && error.code !== "refused";
       if (recoverable && provider.name !== "heuristic") {
-        aiError = `${error.code}: ${error.message}`.slice(0, 300);
+        aiError = error.message.slice(0, 300);
         console.warn("[pipeline] AI analysis failed, falling back to heuristic analyzer:", aiError);
         provider = new HeuristicProvider();
         validated = envelopeToResult(await provider.analyze(content));
@@ -149,6 +152,7 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
       tags: enriched.tags,
       entities: deriveEntities(enriched.structuredData),
       data: enriched.structuredData,
+      ...(enriched.locations.length ? { userData: { locations: enriched.locations } } : {}),
       sourceUrl: content.url,
       sourcePlatform: content.platform,
       sourceAuthor: content.author,

@@ -242,5 +242,7 @@ export const AnalysisResultSchema = z.object({
   summary: z.string().trim().min(1).max(1200),
   tags: z.array(z.string().trim().min(1).max(40)).max(12),
   structuredData: StructuredDataSchema,
+  /** Places mentioned in a non-travel content, shown on a map under the card. */
+  locations: z.array(PlaceSchema).max(30).default([]),
 });
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;

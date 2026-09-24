@@ -1,10 +1,8 @@
 "use client";
 
 import { ExternalLink, MapIcon, Route, Sparkles } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 import { Button, buttonClass } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { googleDirectionsUrl, placeBreakdown, PLACE_KIND_LABEL } from "@/services/travel/stats";
 import type { Itinerary } from "@/types/domain";
@@ -14,12 +12,9 @@ import { useServerAction } from "../use-action";
 import type { MapTiles } from "./map-view";
 import { AddPlaces } from "./add-places";
 import { PlaceList } from "./place-list";
+import { PlacesMap } from "./places-map";
 import { Block, Fact, LockedPreview } from "./shared";
 
-const MapView = dynamic(() => import("./map-view").then((m) => m.MapView), {
-  ssr: false,
-  loading: () => <Skeleton className="h-72 w-full rounded-card" />,
-});
 
 export function TravelView({
   itemId,
@@ -44,7 +39,6 @@ export function TravelView({
   const [day, setDay] = useState(0);
   const { pending, run } = useServerAction();
   const breakdown = placeBreakdown(places);
-  const located = places.filter((p) => p.geo).length;
   const activeDay = itinerary?.days[day];
   const dayRoute = activeDay ? googleDirectionsUrl(activeDay.stops.map((s) => places[s.placeIndex]).filter(Boolean)) : null;
 
@@ -142,9 +136,7 @@ export function TravelView({
       ) : null}
 
       <div ref={mapRef}>
-        <Block title="Carte" action={<span className="text-xs font-semibold text-muted">{located}/{places.length} lieux localisés</span>}>
-          <MapView places={places} tiles={tiles} highlight={activeDay?.stops.map((s) => s.placeIndex)} className="h-72 w-full overflow-hidden rounded-card shadow-card sm:h-96" />
-        </Block>
+        <PlacesMap places={places} tiles={tiles} highlight={activeDay?.stops.map((s) => s.placeIndex)} />
       </div>
 
       <Block title="Lieux détectés">

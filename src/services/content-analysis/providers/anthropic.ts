@@ -7,6 +7,8 @@ import { AiEnvelopeSchema, type AiEnvelope } from "../ai-schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
 import { AnalysisError, type AnalysisProvider } from "./types";
 
+const DEFAULT_MODEL = "claude-opus-5";
+
 /** Models that support the server-side refusal fallback chain. */
 function supportsServerFallbacks(model: string): boolean {
   return model.startsWith("claude-opus-5") || model.startsWith("claude-fable-5");
@@ -23,34 +25,58 @@ export class AnthropicProvider implements AnalysisProvider {
     this.client = new Anthropic({ apiKey, timeout: 90_000, maxRetries: 2 });
   }
 
+  private async call(content: NormalizedContent, model: string, withFallbacks: boolean): Promise<AiEnvelope> {
+    const response = await this.client.beta.messages.parse({
+      model,
+      max_tokens: 16000,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: buildUserPrompt(content) }],
+      output_config: { format: betaZodOutputFormat(AiEnvelopeSchema), effort: "medium" },
+      ...(withFallbacks ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
+    });
+    if (response.stop_reason === "refusal") {
+      throw new AnalysisError("The model declined to analyze this content", "refused");
+    }
+    if (response.stop_reason === "max_tokens") {
+      throw new AnalysisError("The analysis was too long", "invalid_output");
+    }
+    if (!response.parsed_output) {
+      throw new AnalysisError("The model did not return a valid structure", "invalid_output");
+    }
+    return response.parsed_output;
+  }
+
   async analyze(content: NormalizedContent): Promise<AiEnvelope> {
-    const fallbacks = supportsServerFallbacks(this.model);
-    try {
-      const response = await this.client.beta.messages.parse({
-        model: this.model,
-        max_tokens: 16000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: buildUserPrompt(content) }],
-        output_config: { format: betaZodOutputFormat(AiEnvelopeSchema), effort: "medium" },
-        ...(fallbacks ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
-      });
-      if (response.stop_reason === "refusal") {
-        throw new AnalysisError("The model declined to analyze this content", "refused");
+    let model = this.model;
+    let withFallbacks = supportsServerFallbacks(model);
+    // Up to 3 tries: as configured → without the beta fallback option → with the default model.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.call(content, model, withFallbacks);
+      } catch (error) {
+        if (error instanceof AnalysisError) throw error;
+        if (attempt < 2 && error instanceof Anthropic.BadRequestError && withFallbacks) {
+          console.warn("[ai] request rejected with fallbacks, retrying without:", error.message);
+          withFallbacks = false;
+          continue;
+        }
+        if (attempt < 2 && error instanceof Anthropic.NotFoundError && model !== DEFAULT_MODEL) {
+          console.warn(`[ai] model "${model}" not found, retrying with ${DEFAULT_MODEL}`);
+          model = DEFAULT_MODEL;
+          withFallbacks = supportsServerFallbacks(model);
+          continue;
+        }
+        if (error instanceof Anthropic.RateLimitError) throw new AnalysisError("limite de requêtes IA atteinte (réessaie dans 1 min)", "unavailable");
+        if (error instanceof Anthropic.AuthenticationError) throw new AnalysisError("clé AI_API_KEY refusée par Anthropic", "unavailable");
+        if (error instanceof Anthropic.PermissionDeniedError) throw new AnalysisError("clé sans accès (vérifie tes crédits sur console.anthropic.com → Billing)", "unavailable");
+        if (error instanceof Anthropic.NotFoundError) throw new AnalysisError(`modèle IA « ${model} » introuvable (supprime AI_MODEL)`, "unavailable");
+        if (error instanceof Anthropic.BadRequestError) {
+          const credit = /credit|billing|balance/i.test(error.message);
+          throw new AnalysisError(credit ? "plus de crédits Anthropic (console.anthropic.com → Billing)" : `requête IA refusée : ${error.message}`, credit ? "unavailable" : "invalid_output");
+        }
+        if (error instanceof Anthropic.APIError) throw new AnalysisError(`erreur Anthropic ${error.status}`, "unavailable");
+        throw new AnalysisError(error instanceof Error ? error.message : "AI call failed", "unavailable");
       }
-      if (response.stop_reason === "max_tokens") {
-        throw new AnalysisError("The analysis was too long", "invalid_output");
-      }
-      if (!response.parsed_output) {
-        throw new AnalysisError("The model did not return a valid structure", "invalid_output");
-      }
-      return response.parsed_output;
-    } catch (error) {
-      if (error instanceof AnalysisError) throw error;
-      if (error instanceof Anthropic.RateLimitError) throw new AnalysisError("AI rate limited", "unavailable");
-      if (error instanceof Anthropic.AuthenticationError) throw new AnalysisError("AI key rejected", "unavailable");
-      if (error instanceof Anthropic.BadRequestError) throw new AnalysisError(`AI bad request: ${error.message}`, "invalid_output");
-      if (error instanceof Anthropic.APIError) throw new AnalysisError(`AI error ${error.status}`, "unavailable");
-      throw new AnalysisError(error instanceof Error ? error.message : "AI call failed", "unavailable");
     }
   }
 }

@@ -262,6 +262,7 @@ export class SupabaseUserStore implements UserDataStore {
           tags: input.tags,
           entities: input.entities,
           data: input.data,
+          user_data: input.userData ?? {},
           is_saved: input.isSaved ?? false,
           is_example: input.isExample ?? false,
           source_url: input.sourceUrl,

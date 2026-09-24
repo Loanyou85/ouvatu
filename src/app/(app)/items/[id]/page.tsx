@@ -7,6 +7,8 @@ import { ItemImage } from "@/components/ui/item-image";
 import { requireOnboardedContext } from "@/features/auth/context";
 import { LockedPreview } from "@/features/items/locked-preview";
 import { ConvertToPlaces } from "@/features/items/views/category-fix";
+import { PlaceList } from "@/features/items/views/place-list";
+import { PlacesMap } from "@/features/items/views/places-map";
 import { ItemToolbar, SaveBar } from "@/features/items/item-toolbar";
 import { BooksView, DecorView, FashionView, FitnessView, OtherView, ProductsView, ScreenView } from "@/features/items/views/collection-views";
 import type { EntryState } from "@/features/items/views/list-toggle";
@@ -118,7 +120,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
               </p>
             </div>
           ) : null}
-          {d.category !== "TRAVEL" && d.category !== "PLACES" && !view.isExample ? (
+          {d.category !== "TRAVEL" && d.category !== "PLACES" && !view.isExample && !view.userData.locations?.length ? (
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted">Mauvaise catégorie ?</span>
               <ConvertToPlaces itemId={view.id} />
@@ -155,6 +157,14 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
             {d.category === "FITNESS" ? <FitnessView itemId={view.id} data={d.fitness} entries={entries} /> : null}
             {d.category === "OTHER" ? <OtherView data={d.other} /> : null}
           </div>
+
+          {/* Places mentioned in any other kind of content (a look shot in a park…): map right under the card. */}
+          {d.category !== "TRAVEL" && d.category !== "PLACES" && view.userData.locations?.length ? (
+            <div className="mt-10 space-y-6">
+              <PlacesMap places={view.userData.locations} tiles={tiles} title="Les lieux sur la carte" />
+              <PlaceList places={view.userData.locations} />
+            </div>
+          ) : null}
         </div>
       </div>
 

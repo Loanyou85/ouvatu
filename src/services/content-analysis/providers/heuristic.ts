@@ -159,6 +159,7 @@ function emptyEnvelope(category: Category, title: string, summary: string, confi
     decor: null,
     fitness: null,
     other: null,
+    locations: [],
   };
 }
 

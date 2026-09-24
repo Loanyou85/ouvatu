@@ -1,6 +1,6 @@
 import type { Category } from "@/config/categories";
 import type { PlanId } from "@/config/plans";
-import type { Platform, StructuredData } from "@/types/schemas";
+import type { Place, Platform, StructuredData } from "@/types/schemas";
 
 export type AnalysisStatus = "pending" | "fetching" | "analyzing" | "enriching" | "completed" | "failed";
 
@@ -68,6 +68,8 @@ export interface Itinerary {
 /** Per-item user state that is not part of the extracted content. */
 export interface ItemUserData {
   itinerary?: Itinerary;
+  /** Places mentioned in a non-travel content (filled by the analysis). */
+  locations?: Place[];
   note?: string;
 }
 

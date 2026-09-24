@@ -125,5 +125,7 @@ export const AiEnvelopeSchema = z.object({
     })
     .nullable(),
   other: z.object({ keyPoints: list }).nullable(),
+  /** Every place mentioned, whatever the category (a look shot in a park, a recipe from a restaurant…). */
+  locations: z.array(AiPlace),
 });
 export type AiEnvelope = z.infer<typeof AiEnvelopeSchema>;

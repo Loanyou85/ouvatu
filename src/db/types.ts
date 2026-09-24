@@ -44,6 +44,7 @@ export interface NewContentItem {
   tags: string[];
   entities: Entity[];
   data: StructuredData;
+  userData?: ItemUserData;
   isSaved?: boolean;
   isExample?: boolean;
   sourceUrl: string | null;

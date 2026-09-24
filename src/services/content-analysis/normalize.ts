@@ -228,6 +228,11 @@ export function envelopeToResult(env: AiEnvelope): AnalysisResult {
     summary: t(env.summary, 1200) ?? t(env.title, 160) ?? "Inspiration",
     tags: list(env.tags.map((x) => x.toLowerCase().replace(/^#/, "")), 12).map((x) => x.slice(0, 40)),
     structuredData,
+    // Travel / places cards already hold their places.
+    locations:
+      structuredData.category === "TRAVEL" || structuredData.category === "PLACES"
+        ? []
+        : (env.locations ?? []).filter((p) => p.name?.trim()).slice(0, 30).map(place),
   };
   const parsed = AnalysisResultSchema.safeParse(candidate);
   if (!parsed.success) {
