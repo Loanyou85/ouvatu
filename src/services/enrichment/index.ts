@@ -37,7 +37,7 @@ async function geocodePlaces(places: Place[], fallbackCity: string | null, fallb
   const provider = getMapsProvider();
   if (!provider) return;
   let last = 0;
-  for (const place of places.slice(0, 12)) {
+  for (const place of places.slice(0, 20)) {
     if (place.geo) continue;
     const city = place.city ?? fallbackCity;
     const country = place.country ?? fallbackCountry;

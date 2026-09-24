@@ -11,6 +11,7 @@ import { BooksView, DecorView, FashionView, FitnessView, OtherView, ProductsView
 import type { EntryState } from "@/features/items/views/list-toggle";
 import { RecipeView } from "@/features/items/views/recipe-view";
 import { TravelView } from "@/features/items/views/travel-view";
+import { env } from "@/lib/env";
 import { formatRelativeDate, isUuid, pluralize } from "@/lib/utils";
 import { hasFeature } from "@/services/billing/entitlements";
 import { PLATFORM_LABEL } from "@/services/content-ingestion/url";
@@ -38,6 +39,10 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   const detected = countDetected(item.data);
   const d = view.data;
   const canItinerary = hasFeature(plan, "itinerary") || item.isExample;
+  // Tile server chosen on the server (MAP_TILE_URL), OpenStreetMap otherwise.
+  const tiles = env.mapTileUrl
+    ? { url: env.mapTileUrl, attribution: env.mapTileAttribution ?? "&copy; OpenStreetMap contributors" }
+    : undefined;
 
   return (
     <div className={view.isSaved ? "" : "pb-28"}>
@@ -104,6 +109,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
             {d.category === "RECIPES" ? <RecipeView itemId={view.id} recipe={d.recipe} /> : null}
             {d.category === "TRAVEL" ? (
               <TravelView
+                tiles={tiles}
                 itemId={view.id}
                 places={d.travel.places}
                 lockedCount={view.lockedCount}
@@ -118,7 +124,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
               />
             ) : null}
             {d.category === "PLACES" ? (
-              <TravelView itemId={view.id} places={d.places.places} lockedCount={view.lockedCount} itinerary={view.userData.itinerary ?? null} canItinerary={canItinerary} />
+              <TravelView tiles={tiles} itemId={view.id} places={d.places.places} lockedCount={view.lockedCount} itinerary={view.userData.itinerary ?? null} canItinerary={canItinerary} />
             ) : null}
             {d.category === "PRODUCTS" ? <ProductsView itemId={view.id} data={d.products} lockedCount={view.lockedCount} entries={entries} sourceUrl={view.isExample ? null : view.sourceUrl} /> : null}
             {d.category === "MOVIES" || d.category === "SERIES" ? <ScreenView itemId={view.id} data={d.screen} lockedCount={view.lockedCount} entries={entries} /> : null}

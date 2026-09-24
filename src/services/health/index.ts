@@ -3,6 +3,7 @@ import { env, isStripeConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { checkStripePrices } from "@/services/billing/stripe";
 import { checkAnthropicSetup } from "@/services/content-analysis/providers/anthropic";
+import { getMapsProvider } from "@/services/maps";
 
 export interface HealthCheck {
   label: string;
@@ -106,6 +107,28 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
       checks.push({ label: labels[r.interval], status: r.ok ? "ok" : "error", detail: r.detail, fix: r.fix });
     }
   }
+  const maps = getMapsProvider();
+  if (!maps) {
+    checks.push({
+      label: "Localisation des lieux (carte)",
+      status: "missing",
+      detail: env.mapsProvider === "google" ? "MAPS_API_KEY manquante" : "désactivée (MAPS_PROVIDER=none)",
+      fix: "Supprime MAPS_PROVIDER (OpenStreetMap gratuit) ou ajoute MAPS_API_KEY pour Google",
+    });
+  } else {
+    const geo = await maps.geocode("Tour Eiffel, Paris, France").catch(() => null);
+    checks.push({
+      label: "Localisation des lieux (carte)",
+      status: geo ? "ok" : "error",
+      detail: geo ? `OK (${maps.name === "google" ? "Google" : "OpenStreetMap"})` : `${maps.name === "google" ? "Google" : "OpenStreetMap"} ne répond pas`,
+      fix: geo
+        ? undefined
+        : maps.name === "google"
+          ? "Google Cloud → active « Geocoding API » et la facturation, vérifie MAPS_API_KEY"
+          : "Ajoute MAPS_CONTACT_EMAIL (ton email) ou passe à Google (MAPS_PROVIDER=google + MAPS_API_KEY)",
+    });
+  }
+
   const ai = await checkAnthropicSetup();
   checks.push({
     label: "IA (AI_API_KEY)",

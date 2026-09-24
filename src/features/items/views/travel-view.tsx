@@ -1,16 +1,17 @@
 "use client";
 
-import { MapIcon, Route, Sparkles } from "lucide-react";
+import { ExternalLink, MapIcon, Route, Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { placeBreakdown, PLACE_KIND_LABEL } from "@/services/travel/stats";
+import { googleDirectionsUrl, placeBreakdown, PLACE_KIND_LABEL } from "@/services/travel/stats";
 import type { Itinerary } from "@/types/domain";
 import type { Place } from "@/types/schemas";
 import { generateItineraryAction } from "../actions";
 import { useServerAction } from "../use-action";
+import type { MapTiles } from "./map-view";
 import { PlaceList } from "./place-list";
 import { Block, Fact, LockedPreview } from "./shared";
 
@@ -26,7 +27,9 @@ export function TravelView({
   itinerary,
   canItinerary,
   facts,
+  tiles,
 }: {
+  tiles?: MapTiles;
   itemId: string;
   places: Place[];
   lockedCount: number;
@@ -40,6 +43,7 @@ export function TravelView({
   const breakdown = placeBreakdown(places);
   const located = places.filter((p) => p.geo).length;
   const activeDay = itinerary?.days[day];
+  const dayRoute = activeDay ? googleDirectionsUrl(activeDay.stops.map((s) => places[s.placeIndex]).filter(Boolean)) : null;
 
   return (
     <div className="space-y-8">
@@ -104,6 +108,11 @@ export function TravelView({
               ))}
             </ol>
           ) : null}
+          {dayRoute ? (
+            <a href={dayRoute} target="_blank" rel="noopener noreferrer" className={buttonClass("dark", "md", "mt-4 w-full sm:w-auto")}>
+              <Route className="h-4 w-4" /> Ouvrir le jour {activeDay?.day} dans Google Maps <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : null}
           {itinerary.unplaced.length ? (
             <p className="mt-4 text-sm text-muted">
               À placer librement : {itinerary.unplaced.map((u) => u.name).join(", ")}
@@ -116,7 +125,7 @@ export function TravelView({
 
       <div ref={mapRef}>
         <Block title="Carte" action={<span className="text-xs font-semibold text-muted">{located}/{places.length} lieux localisés</span>}>
-          <MapView places={places} highlight={activeDay?.stops.map((s) => s.placeIndex)} className="h-72 w-full overflow-hidden rounded-card shadow-card sm:h-96" />
+          <MapView places={places} tiles={tiles} highlight={activeDay?.stops.map((s) => s.placeIndex)} className="h-72 w-full overflow-hidden rounded-card shadow-card sm:h-96" />
         </Block>
       </div>
 

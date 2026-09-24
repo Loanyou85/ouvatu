@@ -46,7 +46,7 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 | `STRIPE_PRICE_PREMIUM_WEEKLY`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY` | IDs des prix Stripe récurrents |
 | `AI_API_KEY`, `AI_MODEL`, `AI_PROVIDER` | Analyse IA (Anthropic, modèle par défaut `claude-opus-5`) |
 | `MAPS_PROVIDER`, `MAPS_API_KEY`, `MAPS_CONTACT_EMAIL` | Géocodage (`osm` / `google` / `none`) |
-| `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` | Tuiles de carte (OSM par défaut) |
+| `MAP_TILE_URL`, `MAP_TILE_ATTRIBUTION` | Tuiles de carte (OSM par défaut) |
 | `TMDB_API_KEY`, `YOUTUBE_API_KEY`, `META_OEMBED_TOKEN` | Enrichissements optionnels |
 | `ADMIN_EMAILS` | Emails autorisés sur `/admin` |
 | `LIFETIME_PREMIUM_EMAILS` | Emails Premium à vie, sans paiement (séparés par des virgules) |
@@ -134,7 +134,7 @@ npm run build && npm start
 - Clé Anthropic (`AI_API_KEY`) — sinon seul l'analyseur heuristique est disponible.
 - Stripe live + webhook.
 - Tuiles de carte : les serveurs OSM publics ne sont pas faits pour du trafic de production → MapTiler, Stadia ou
-  Mapbox via `NEXT_PUBLIC_MAP_TILE_URL`. Nominatim : 1 requête/s, renseigner `MAPS_CONTACT_EMAIL` (ou `google`).
+  Mapbox via `MAP_TILE_URL`. Nominatim : 1 requête/s, renseigner `MAPS_CONTACT_EMAIL` (ou `google`).
 - Instagram : l'oEmbed officiel nécessite un token d'app Meta (`META_OEMBED_TOKEN`) ; sans lui, l'utilisateur
   colle la légende. TikTok / YouTube / Pinterest utilisent leurs oEmbed publics.
 - Rate limiting en mémoire (par instance) → Upstash Redis / Vercel KV pour du multi-instance (`src/lib/rate-limit.ts`).

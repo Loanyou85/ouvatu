@@ -33,3 +33,34 @@ export function mapsSearchUrl(place: Pick<Place, "name" | "city" | "country">): 
   const q = [place.name, place.city, place.country].filter(Boolean).join(", ");
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
+
+/** Opens the place in Apple Plans (Maps) — pinned at its position when known. */
+export function appleMapsUrl(place: Pick<Place, "name" | "city" | "country" | "geo">): string {
+  const q = [place.name, place.city, place.country].filter(Boolean).join(", ");
+  const params = new URLSearchParams({ q });
+  if (place.geo) params.set("ll", `${place.geo.lat},${place.geo.lng}`);
+  return `https://maps.apple.com/?${params.toString()}`;
+}
+
+function waypoint(place: Pick<Place, "name" | "city" | "country" | "geo">): string {
+  return place.geo ? `${place.geo.lat},${place.geo.lng}` : [place.name, place.city, place.country].filter(Boolean).join(", ");
+}
+
+/**
+ * Google Maps directions through every stop of a day, in order (walking).
+ * Google accepts up to 9 intermediate waypoints in a link; extra stops are dropped.
+ */
+export function googleDirectionsUrl(stops: Pick<Place, "name" | "city" | "country" | "geo">[]): string | null {
+  if (stops.length === 0) return null;
+  if (stops.length === 1) return mapsSearchUrl(stops[0]);
+  const points = stops.map(waypoint);
+  const params = new URLSearchParams({
+    api: "1",
+    origin: points[0],
+    destination: points[points.length - 1],
+    travelmode: "walking",
+  });
+  const middle = points.slice(1, -1).slice(0, 9);
+  if (middle.length) params.set("waypoints", middle.join("|"));
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}

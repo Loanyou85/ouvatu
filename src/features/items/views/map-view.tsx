@@ -5,16 +5,28 @@ import { useEffect, useRef } from "react";
 import type { Place } from "@/types/schemas";
 import { PLACE_KIND_LABEL } from "@/services/travel/stats";
 
-/**
- * Map rendering behind a tiny abstraction: tiles come from
- * NEXT_PUBLIC_MAP_TILE_URL (OpenStreetMap by default) so the provider can be
- * swapped (MapTiler, Mapbox, Stadia…) without touching components.
- */
-const TILE_URL = process.env.NEXT_PUBLIC_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-const TILE_ATTRIBUTION =
-  process.env.NEXT_PUBLIC_MAP_TILE_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+/** Map tiles: set server-side (MAP_TILE_URL) and passed down, OpenStreetMap by default. */
+export interface MapTiles {
+  url: string;
+  attribution: string;
+}
 
-export function MapView({ places, className, highlight }: { places: Place[]; className?: string; highlight?: number[] }) {
+export const DEFAULT_TILES: MapTiles = {
+  url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+};
+
+export function MapView({
+  places,
+  className,
+  highlight,
+  tiles = DEFAULT_TILES,
+}: {
+  places: Place[];
+  className?: string;
+  highlight?: number[];
+  tiles?: MapTiles;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const located = places.map((p, i) => ({ p, i })).filter(({ p }) => p.geo);
 
@@ -25,7 +37,7 @@ export function MapView({ places, className, highlight }: { places: Place[]; cla
     void import("leaflet").then((L) => {
       if (cancelled || !containerRef.current) return;
       map = L.map(containerRef.current, { scrollWheelZoom: false, attributionControl: true, zoomControl: true });
-      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
+      L.tileLayer(tiles.url, { attribution: tiles.attribution, maxZoom: 19 }).addTo(map);
       const bounds = L.latLngBounds([]);
       located.forEach(({ p, i }, order) => {
         const emoji = PLACE_KIND_LABEL[p.kind].emoji;

@@ -40,6 +40,8 @@ export const env = {
   mapsProvider: read("MAPS_PROVIDER") ?? "osm",
   mapsApiKey: read("MAPS_API_KEY"),
   mapsContactEmail: read("MAPS_CONTACT_EMAIL"),
+  mapTileUrl: read("MAP_TILE_URL", "NEXT_PUBLIC_MAP_TILE_URL"),
+  mapTileAttribution: read("MAP_TILE_ATTRIBUTION", "NEXT_PUBLIC_MAP_TILE_ATTRIBUTION"),
 
   tmdbApiKey: read("TMDB_API_KEY"),
   metaOembedToken: read("META_OEMBED_TOKEN"),

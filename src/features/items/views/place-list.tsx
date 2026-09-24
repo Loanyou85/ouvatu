@@ -1,5 +1,5 @@
 import { ExternalLink, MapPin } from "lucide-react";
-import { mapsSearchUrl, PLACE_KIND_LABEL } from "@/services/travel/stats";
+import { appleMapsUrl, mapsSearchUrl, PLACE_KIND_LABEL } from "@/services/travel/stats";
 import type { Place } from "@/types/schemas";
 import { NOT_AVAILABLE } from "./shared";
 
@@ -19,14 +19,26 @@ export function PlaceList({ places }: { places: Place[] }) {
                   {[PLACE_KIND_LABEL[p.kind].singular, p.cuisine, p.city].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              <a
-                href={mapsSearchUrl(p)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-bg px-3 py-1.5 text-xs font-semibold hover:bg-hover"
-              >
-                Maps <ExternalLink className="h-3 w-3" />
-              </a>
+              <div className="flex shrink-0 gap-1.5">
+                <a
+                  href={mapsSearchUrl(p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Ouvrir ${p.name} dans Google Maps`}
+                  className="inline-flex items-center gap-1 rounded-full bg-bg px-3 py-1.5 text-xs font-semibold hover:bg-hover"
+                >
+                  Maps <ExternalLink className="h-3 w-3" />
+                </a>
+                <a
+                  href={appleMapsUrl(p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Ouvrir ${p.name} dans Plans`}
+                  className="inline-flex items-center gap-1 rounded-full bg-bg px-3 py-1.5 text-xs font-semibold hover:bg-hover"
+                >
+                  Plans <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
             </div>
             {p.description ? <p className="mt-1.5 text-sm text-ink/80">{p.description}</p> : null}
             <p className="mt-1.5 flex items-start gap-1 text-xs text-muted">
