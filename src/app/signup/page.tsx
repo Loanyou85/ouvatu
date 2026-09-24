@@ -7,8 +7,9 @@ import { getSessionUser } from "@/services/users/auth";
 
 export const metadata: Metadata = { title: "Créer un compte" };
 
-export default async function SignupPage() {
+export default async function SignupPage(props: PageProps<"/signup">) {
   if (await getSessionUser()) redirect("/");
+  const { next } = await props.searchParams;
   return (
     <AuthLayout
       title="Crée ton espace"
@@ -22,7 +23,7 @@ export default async function SignupPage() {
         </>
       }
     >
-      <AuthForm mode="signup" />
+      <AuthForm mode="signup" next={typeof next === "string" ? next : undefined} />
     </AuthLayout>
   );
 }

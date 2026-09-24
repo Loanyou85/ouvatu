@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Connexion" };
 
 export default async function LoginPage(props: PageProps<"/login">) {
   if (await getSessionUser()) redirect("/");
-  const { next } = await props.searchParams;
+  const { next, confirmed, error } = await props.searchParams;
   return (
     <AuthLayout
       title="Content de te revoir"
@@ -23,6 +23,16 @@ export default async function LoginPage(props: PageProps<"/login">) {
         </>
       }
     >
+      {confirmed ? (
+        <p className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm font-semibold text-success">
+          ✅ Ton email est confirmé. Connecte-toi pour continuer.
+        </p>
+      ) : null}
+      {error === "link_expired" ? (
+        <p className="mb-4 rounded-2xl bg-error-soft px-4 py-3 text-sm font-semibold text-error">
+          Ce lien a expiré. Connecte-toi, ou recrée ton compte pour recevoir un nouvel email.
+        </p>
+      ) : null}
       <AuthForm mode="login" next={typeof next === "string" ? next : undefined} />
     </AuthLayout>
   );

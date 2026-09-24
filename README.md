@@ -55,7 +55,10 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 
 1. Crée un projet (région UE recommandée pour le RGPD).
 2. Copie l'URL, la clé `anon` et la clé `service_role` dans `.env.local`.
-3. Auth → Providers → Email : activé. Auth → URL Configuration : ajoute `https://<ton-domaine>/auth/callback`.
+3. Auth → Providers → Email : activé. Auth → URL Configuration :
+   - **Site URL** : `https://<ton-domaine>` (pas `localhost`, sinon les emails pointent vers localhost) ;
+   - **Redirect URLs** : `https://<ton-domaine>/**` (et `http://localhost:3000/**` pour le développement).
+   Le lien de confirmation ramène automatiquement dans l'app (`/auth/callback?next=…`).
 4. Applique la migration (section suivante).
 
 ## 4. Migrations

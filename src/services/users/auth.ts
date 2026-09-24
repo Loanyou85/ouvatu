@@ -54,13 +54,22 @@ async function setLocalSession(userId: string) {
   });
 }
 
-export async function signUp(email: string, password: string, name: string | null): Promise<AuthResult & { userId?: string }> {
+/**
+ * @param confirmUrl absolute URL the confirmation email links back to (built from the
+ *   domain the visitor is actually on, so it never points to localhost in production).
+ */
+export async function signUp(
+  email: string,
+  password: string,
+  name: string | null,
+  confirmUrl?: string,
+): Promise<AuthResult & { userId?: string }> {
   if (isSupabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name }, emailRedirectTo: `${env.appUrl}/auth/callback` },
+      options: { data: { name }, emailRedirectTo: confirmUrl ?? `${env.appUrl}/auth/callback` },
     });
     if (error) return { ok: false, error: translateAuthError(error.message) };
     return { ok: true, needsEmailConfirmation: !data.session, userId: data.user?.id };
