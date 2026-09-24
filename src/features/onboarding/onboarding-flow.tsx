@@ -74,7 +74,7 @@ export function OnboardingFlow({ name }: { name: string | null }) {
         {step === 2 ? (
           <div className="flex flex-1 flex-col justify-center text-center">
             <div className="mx-auto grid w-full max-w-[260px] gap-2.5 text-left">
-              {["Copie un lien", "Colle-le dans NOMA", "Profite de ta fiche"].map((label, i) => (
+              {["Copie un lien", "Colle-le dans OUVATU", "Profite de ta fiche"].map((label, i) => (
                 <div key={label} className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card animate-fade-up" style={{ animationDelay: `${i * 120}ms` }}>
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-soft text-sm font-extrabold text-accent-strong">{i + 1}</span>
                   <span className="font-semibold">{label}</span>

@@ -5,12 +5,12 @@ import { isMockBillingAllowed } from "@/lib/env";
 import { track } from "@/services/analytics";
 import { getSessionUser } from "@/services/users/auth";
 
-const Body = z.object({ action: z.enum(["subscribe", "cancel"]), interval: z.enum(["month", "year"]).optional() });
+const Body = z.object({ action: z.enum(["subscribe", "cancel"]), interval: z.enum(["week", "month", "year"]).optional() });
 
 /**
  * DEVELOPMENT ONLY — simulates what the Stripe webhook does, so the full
  * premium flow can be tested without Stripe keys. Disabled when Stripe is
- * configured or in production (unless NOMA_DEMO_BILLING=true).
+ * configured or in production (unless OUVATU_DEMO_BILLING=true).
  */
 export async function POST(request: Request) {
   if (!isMockBillingAllowed) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   const subscribe = parsed.data.action === "subscribe";
   const interval = parsed.data.interval ?? "month";
-  const periodEnd = new Date(Date.now() + (interval === "year" ? 365 : 30) * 86_400_000).toISOString();
+  const periodEnd = new Date(Date.now() + ({ week: 7, month: 30, year: 365 }[interval]) * 86_400_000).toISOString();
   await admin.upsertSubscription({
     userId: user.id,
     stripeCustomerId: null,

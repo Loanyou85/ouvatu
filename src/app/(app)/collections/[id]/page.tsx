@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { CollectionHeaderActions, CollectionItems } from "@/features/collections/collection-forms";
 import { isUuid, pluralize } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Collection" };
 export default async function CollectionPage(props: PageProps<"/collections/[id]">) {
   const { id } = await props.params;
   if (!isUuid(id)) notFound();
-  const { store } = await getAppContext();
+  const { store } = await requireSubscribedContext();
   const collection = await store.getCollection(id);
   if (!collection) notFound();
   const items = await store.listItems({ collectionId: id });

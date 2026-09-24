@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryBadge } from "@/components/ui/badge";
 import { ItemImage } from "@/components/ui/item-image";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { ItemToolbar, SaveBar } from "@/features/items/item-toolbar";
 import { BooksView, DecorView, FashionView, FitnessView, OtherView, ProductsView, ScreenView } from "@/features/items/views/collection-views";
 import type { EntryState } from "@/features/items/views/list-toggle";
@@ -22,7 +22,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   const { id } = await props.params;
   const searchParams = await props.searchParams;
   if (!isUuid(id)) notFound();
-  const { store, plan } = await getAppContext();
+  const { store, plan } = await requireSubscribedContext();
   const item = await store.getItem(id);
   if (!item) notFound();
 

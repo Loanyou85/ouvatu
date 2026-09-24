@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import type { BillingInterval } from "@/config/plans";
 
-export function DemoCheckoutButton({ interval, label }: { interval: "month" | "year"; label: string }) {
+export function DemoCheckoutButton({ interval, label }: { interval: BillingInterval; label: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   return (

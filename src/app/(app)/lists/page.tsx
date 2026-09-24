@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LIST_TABS } from "@/config/lists";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { SavedList, ShoppingList } from "@/features/lists/list-views";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Mes listes" };
 export default async function ListsPage(props: PageProps<"/lists">) {
   const sp = await props.searchParams;
   const tab = LIST_TABS.find((t) => t.slug === sp.tab) ?? LIST_TABS[0];
-  const { store } = await getAppContext();
+  const { store } = await requireSubscribedContext();
   const [shopping, saved] = await Promise.all([store.listShopping(), store.listSaved()]);
   const count = (t: (typeof LIST_TABS)[number]) =>
     t.listType === "SHOPPING" ? shopping.filter((s) => !s.checked).length : saved.filter((s) => s.listType === t.listType && s.status === "todo").length;

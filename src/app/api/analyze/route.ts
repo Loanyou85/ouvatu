@@ -32,8 +32,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ sourceId: source.id, status: source.analysisStatus }, { status: 202 });
   } catch (error) {
     if (error instanceof PipelineError) {
-      if (error.code === "quota_exceeded") await track(user.id, "paywall_viewed", { reason: "quota" });
-      return NextResponse.json({ error: error.code }, { status: error.code === "quota_exceeded" ? 402 : 400 });
+      const paywall = error.code === "quota_exceeded" || error.code === "subscription_required";
+      if (paywall) await track(user.id, "paywall_viewed", { reason: error.code });
+      return NextResponse.json({ error: error.code }, { status: paywall ? 402 : 400 });
     }
     console.error("[api/analyze] unexpected error", error);
     return NextResponse.json({ error: "internal" }, { status: 500 });

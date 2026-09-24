@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { CATEGORY_META } from "@/config/categories";
-import { PREMIUM_OFFERS, formatPrice } from "@/config/plans";
+import { formatPrice, monthlyEquivalentCents } from "@/config/plans";
 import { getAdminStore } from "@/db";
 import { getAppContext } from "@/features/auth/context";
 import { stripeRevenueLast30Days } from "@/services/billing/stripe";
@@ -30,7 +30,7 @@ export default async function AdminPage() {
 
   const [overview, revenue] = await Promise.all([admin.overview(), stripeRevenueLast30Days()]);
   const active = overview.subscriptions.filter((s) => s.status === "active" || s.status === "trialing");
-  const mrrCents = active.reduce((sum, s) => sum + (s.interval === "year" ? PREMIUM_OFFERS.year.amountCents / 12 : PREMIUM_OFFERS.month.amountCents), 0);
+  const mrrCents = active.reduce((sum, s) => sum + monthlyEquivalentCents(s.interval ?? "month"), 0);
   const failureRate = overview.totals.analyses ? Math.round((overview.totals.failedAnalyses / overview.totals.analyses) * 100) : 0;
 
   return (

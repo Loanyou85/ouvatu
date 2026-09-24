@@ -8,12 +8,12 @@ import { newId, nowIso } from "@/lib/utils";
  * Minimal email/password auth for local development when Supabase is not
  * configured. Passwords are hashed with scrypt; the session cookie is HMAC-signed.
  */
-export const LOCAL_SESSION_COOKIE = "noma_session";
+export const LOCAL_SESSION_COOKIE = "ouvatu_session";
 
 function secret(): string {
   if (env.sessionSecret) return env.sessionSecret;
   if (env.isProduction) throw new Error("SESSION_SECRET is required when running local auth in production");
-  return "noma-dev-only-session-secret";
+  return "ouvatu-dev-only-session-secret";
 }
 
 function hashPassword(password: string): string {

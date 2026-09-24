@@ -19,6 +19,7 @@ import type { AnalysisResult } from "@/types/schemas";
 /** Error codes persisted on the source and translated to human copy in the UI. */
 export type PipelineErrorCode =
   | "invalid_url"
+  | "subscription_required"
   | "quota_exceeded"
   | "unreachable"
   | "empty"
@@ -43,6 +44,7 @@ export async function startAnalysis(store: UserDataStore, input: ContentInput): 
   if (!url) throw new PipelineError("invalid_url");
 
   const plan = await getPlan(store);
+  if (plan !== "PREMIUM") throw new PipelineError("subscription_required");
   const used = await store.countSourcesSince(startOfMonthIso());
   if (used >= limitsFor(plan).analysesPerMonth) {
     throw new PipelineError("quota_exceeded");

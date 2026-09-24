@@ -3,7 +3,7 @@ import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { BRAND } from "@/config/brand";
-import { PLAN_LIMITS, PREMIUM_OFFERS, formatPrice } from "@/config/plans";
+import { OFFER_ORDER, PLAN_LIMITS, PREMIUM_OFFERS, formatPrice } from "@/config/plans";
 import { SiteFooter } from "@/components/layout/site-footer";
 
 const DEMOS = [
@@ -64,7 +64,7 @@ export function Landing() {
                 J&apos;ai déjà un compte
               </Link>
             </div>
-            <p className="mt-4 text-sm text-subtle">Gratuit · Sans carte bancaire · {PLAN_LIMITS.FREE.analysesPerMonth} analyses offertes chaque mois</p>
+            <p className="mt-4 text-sm text-subtle">Sans engagement · Dès {formatPrice(PREMIUM_OFFERS.week.amountCents)}/semaine</p>
           </div>
 
           <div className="relative mx-auto w-full max-w-sm animate-fade-up [animation-delay:120ms]">
@@ -74,7 +74,7 @@ export function Landing() {
                 <Link2 className="h-4 w-4" /> tiktok.com/@…/video/742…
               </div>
               <div className="my-3 flex items-center justify-center gap-2 text-xs font-bold text-accent-strong">
-                <Sparkles className="h-4 w-4 animate-breathe" /> NOMA analyse…
+                <Sparkles className="h-4 w-4 animate-breathe" /> OUVATU analyse…
               </div>
               <div className="overflow-hidden rounded-2xl border border-line">
                 <div className="grid h-36 place-items-center bg-gradient-to-br from-accent-soft via-[#f4f3ff] to-bg text-6xl">🇵🇹</div>
@@ -94,7 +94,7 @@ export function Landing() {
 
         <section className="py-12">
           <h2 className="text-center text-3xl font-extrabold tracking-tight">Un lien. Une fiche utile.</h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-muted">NOMA comprend ce que tu as trouvé et le transforme en quelque chose que tu peux vraiment utiliser.</p>
+          <p className="mx-auto mt-2 max-w-md text-center text-muted">OUVATU comprend ce que tu as trouvé et le transforme en quelque chose que tu peux vraiment utiliser.</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {DEMOS.map((demo, i) => (
               <div key={demo.title} className="rounded-card bg-card p-5 shadow-card animate-fade-up" style={{ animationDelay: `${i * 90}ms` }}>
@@ -118,36 +118,38 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="py-12">
-          <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
-            <div className="rounded-card bg-card p-6 shadow-card">
-              <p className="font-extrabold">Gratuit</p>
-              <p className="mt-1 text-3xl font-extrabold tracking-tight">0 €</p>
-              <ul className="mt-5 space-y-2.5 text-sm">
-                {[`${PLAN_LIMITS.FREE.analysesPerMonth} analyses par mois`, `${PLAN_LIMITS.FREE.maxSavedItems} éléments dans ta bibliothèque`, `${PLAN_LIMITS.FREE.maxCollections} collections`, "Aperçu des résultats"].map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <Check className="h-4 w-4 shrink-0 text-success" /> {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-card bg-ink p-6 text-white shadow-float">
-              <p className="font-extrabold">Premium</p>
-              <p className="mt-1 text-3xl font-extrabold tracking-tight">
-                {formatPrice(PREMIUM_OFFERS.month.amountCents)}
-                <span className="text-base font-semibold text-white/60"> /mois</span>
-              </p>
-              <p className="text-sm text-white/60">ou {formatPrice(PREMIUM_OFFERS.year.amountCents)} /an</p>
-              <ul className="mt-5 space-y-2.5 text-sm">
-                {["Analyses illimitées*", "Bibliothèque et collections illimitées", "Tous les éléments détectés", "Itinéraires de voyage"].map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <Check className="h-4 w-4 shrink-0 text-[#a7a2ff]" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-xs text-white/40">* dans la limite d&apos;un usage raisonnable ({PLAN_LIMITS.PREMIUM.analysesPerMonth}/mois).</p>
-            </div>
+        <section className="py-12" id="offres">
+          <h2 className="text-center text-3xl font-extrabold tracking-tight">Choisis ton rythme.</h2>
+          <p className="mx-auto mt-2 max-w-md text-center text-muted">Toutes les fonctionnalités, quelle que soit l&apos;offre. Sans engagement.</p>
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 md:grid-cols-3">
+            {OFFER_ORDER.map((key) => {
+              const offer = PREMIUM_OFFERS[key];
+              const featured = key === "year";
+              return (
+                <div key={key} className={featured ? "rounded-card bg-ink p-6 text-white shadow-float" : "rounded-card bg-card p-6 shadow-card"}>
+                  <p className="flex items-center gap-2 font-extrabold">
+                    {offer.label}
+                    {offer.highlight ? <span className="rounded-full bg-success px-2 py-0.5 text-xs font-bold text-white">{offer.highlight}</span> : null}
+                  </p>
+                  <p className="mt-1 text-3xl font-extrabold tracking-tight">
+                    {formatPrice(offer.amountCents)}
+                    <span className={featured ? "text-base font-semibold text-white/60" : "text-base font-semibold text-muted"}> /{offer.unit}</span>
+                  </p>
+                  <ul className="mt-5 space-y-2.5 text-sm">
+                    {["Tous les éléments détectés", "Itinéraires de voyage", "Bibliothèque et collections illimitées"].map((f) => (
+                      <li key={f} className="flex gap-2">
+                        <Check className={featured ? "h-4 w-4 shrink-0 text-[#a7a2ff]" : "h-4 w-4 shrink-0 text-success"} /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/signup" className={buttonClass(featured ? "accent" : "dark", "md", "mt-6 w-full")}>
+                    Choisir
+                  </Link>
+                </div>
+              );
+            })}
           </div>
+          <p className="mt-4 text-center text-xs text-subtle">Usage raisonnable : {PLAN_LIMITS.PREMIUM.analysesPerMonth} analyses par mois.</p>
         </section>
       </main>
       <SiteFooter />

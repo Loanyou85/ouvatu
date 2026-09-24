@@ -6,7 +6,7 @@ import { track } from "@/services/analytics";
 import { createCheckoutSession } from "@/services/billing/stripe";
 import { getSessionUser } from "@/services/users/auth";
 
-const Body = z.object({ interval: z.enum(["month", "year"]) });
+const Body = z.object({ interval: z.enum(["week", "month", "year"]) });
 
 /** POST /api/billing/checkout — returns the URL to redirect to (Stripe Checkout or dev simulation). */
 export async function POST(request: Request) {

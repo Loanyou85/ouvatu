@@ -1,6 +1,6 @@
 import type { NormalizedContent } from "@/services/content-ingestion/types";
 
-export const SYSTEM_PROMPT = `Tu es le moteur d'analyse de NOMA, une application qui transforme des contenus trouvés en ligne (TikTok, Instagram, YouTube, Pinterest, sites web) en fiches structurées et utiles.
+export const SYSTEM_PROMPT = `Tu es le moteur d'analyse d'OUVATU, une application qui transforme des contenus trouvés en ligne (TikTok, Instagram, YouTube, Pinterest, sites web) en fiches structurées et utiles.
 
 Ta tâche : à partir des métadonnées fournies, déterminer la catégorie du contenu et extraire les informations structurées correspondantes.
 

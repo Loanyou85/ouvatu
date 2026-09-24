@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LIBRARY_TABS, type Category } from "@/config/categories";
 import { limitsFor } from "@/config/plans";
 import { AddTrigger } from "@/features/add/add-provider";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { LoadExamplesButton } from "@/features/home/load-examples-button";
 import { ItemGrid } from "@/features/items/item-card";
 import { LibraryFilters } from "@/features/library/filters";
@@ -22,7 +22,7 @@ function sinceDays(days: number): string | undefined {
 export default async function LibraryPage(props: PageProps<"/library">) {
   const sp = await props.searchParams;
   const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
-  const { store, plan } = await getAppContext();
+  const { store, plan } = await requireSubscribedContext();
 
   const tab = LIBRARY_TABS.find((t) => t.slug === one(sp.category)) ?? LIBRARY_TABS[0];
   const collectionId = isUuid(one(sp.collection)) ? one(sp.collection) : undefined;
@@ -53,7 +53,7 @@ export default async function LibraryPage(props: PageProps<"/library">) {
           <h1 className="text-[1.9rem] font-extrabold tracking-[-0.03em]">Bibliothèque</h1>
           <p className="text-sm text-muted">
             {total} élément{total > 1 ? "s" : ""}
-            {Number.isFinite(limit) ? ` sur ${limit} (plan gratuit)` : ""}
+            {Number.isFinite(limit) ? ` sur ${limit}` : ""}
           </p>
         </div>
         <AddTrigger from="library" className={buttonClass("accent", "sm", "hidden sm:inline-flex")}>

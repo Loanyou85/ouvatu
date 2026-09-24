@@ -1,6 +1,6 @@
-# NOMA — Tes découvertes. Enfin utilisables.
+# OUVATU — Tes découvertes. Enfin utilisables.
 
-NOMA transforme un lien TikTok, Instagram, YouTube, Pinterest ou web en **fiche structurée et actionnable** :
+OUVATU transforme un lien TikTok, Instagram, YouTube, Pinterest ou web en **fiche structurée et actionnable** :
 recette (portions, liste de courses), voyage (carte, itinéraire), lieux, produits (wishlist), films/séries (watchlist),
 livres (à lire), mode, déco, fitness (séance).
 
@@ -20,17 +20,17 @@ npm run dev                  # http://localhost:3000
 
 ### Mode local (zéro configuration)
 
-Sans variables Supabase, NOMA démarre en **mode local** pour pouvoir développer et tester immédiatement :
+Sans variables Supabase, OUVATU démarre en **mode local** pour pouvoir développer et tester immédiatement :
 
 | Brique | Mode local | Production |
 | --- | --- | --- |
-| Base de données | fichier JSON `.data/noma-local-db.json` | Supabase Postgres (RLS) |
+| Base de données | fichier JSON `.data/ouvatu-local-db.json` | Supabase Postgres (RLS) |
 | Auth | email / mot de passe (scrypt + cookie signé HMAC) | Supabase Auth |
 | Analyse IA | analyseur heuristique (JSON-LD + texte, n'invente rien) | Claude via l'API Anthropic |
 | Paiement | page de paiement **simulé** clairement étiquetée | Stripe Checkout + webhook |
 | Géocodage | OpenStreetMap Nominatim | OSM ou Google |
 
-Sur l'écran d'accueil vide, **« Voir des exemples »** charge 8 inspirations d'exemple (voyage Lisbonne, recette,
+Une fois abonné (paiement simulé en local), sur l'écran d'accueil vide, **« Voir des exemples »** charge 8 inspirations d'exemple (voyage Lisbonne, recette,
 restaurant, produit, films, livres, séance, déco) marquées « Exemple ».
 
 ## 2. Variables d'environnement
@@ -43,7 +43,7 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Active Supabase (DB + Auth) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Webhook Stripe, analytics, admin, suppression de compte |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Paiement |
-| `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY` | IDs des prix Stripe récurrents |
+| `STRIPE_PRICE_PREMIUM_WEEKLY`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY` | IDs des prix Stripe récurrents |
 | `AI_API_KEY`, `AI_MODEL`, `AI_PROVIDER` | Analyse IA (Anthropic, modèle par défaut `claude-opus-5`) |
 | `MAPS_PROVIDER`, `MAPS_API_KEY`, `MAPS_CONTACT_EMAIL` | Géocodage (`osm` / `google` / `none`) |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` | Tuiles de carte (OSM par défaut) |
@@ -84,16 +84,16 @@ blocage de l'auto-promotion Premium et suppression en cascade du compte.
 
 ## 5. Stripe
 
-1. Crée un produit « NOMA Premium » avec deux prix récurrents : 9,99 €/mois et 49,99 €/an.
+1. Crée un produit « OUVATU Premium » avec trois prix récurrents : 4,99 €/semaine, 9,99 €/mois et 49,99 €/an.
    Les montants **affichés** sont centralisés dans `src/config/plans.ts` (à garder alignés avec Stripe).
-2. Renseigne `STRIPE_SECRET_KEY`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY`.
+2. Renseigne `STRIPE_SECRET_KEY`, `STRIPE_PRICE_PREMIUM_WEEKLY`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY`.
 3. Webhook → `https://<ton-domaine>/api/webhooks/stripe` avec les événements
    `checkout.session.completed`, `customer.subscription.created|updated|deleted`, puis `STRIPE_WEBHOOK_SECRET`.
 4. En local : `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 5. Active le **Customer Portal** (gestion / résiliation depuis le profil).
 
 Le statut Premium n'est **jamais** décidé côté client : seul le webhook (signature vérifiée) écrit l'abonnement.
-Sans Stripe, `/premium/checkout-demo` simule le paiement (désactivé en production sauf `NOMA_DEMO_BILLING=true`).
+Sans Stripe, `/premium/checkout-demo` simule le paiement (désactivé en production sauf `OUVATU_DEMO_BILLING=true`).
 
 ## 6. Fournisseur IA
 
@@ -168,8 +168,10 @@ enrichissement → enregistrement → progression 0-5 exposée à l'UI (les éta
 Une extension de partage iOS/Android ou une Web Share Target appelle le même `POST /api/analyze`, ou ouvre
 `/add?url=…&auto=1`.
 
-**Premium** : limites dans `src/config/plans.ts`, appliquées côté serveur (quota d'analyses, bibliothèque,
-collections, aperçu tronqué dans `services/items/view.ts`, itinéraire).
+**Abonnement obligatoire** : il n'y a pas d'offre gratuite. Après l'onboarding, un compte sans abonnement actif
+est redirigé vers `/premium` (offres hebdomadaire, mensuelle, annuelle — `src/config/plans.ts`). Le contrôle est fait
+côté serveur sur chaque page produit (`requireSubscribedContext`), dans le pipeline (`subscription_required`) et
+dans les actions (limites à 0 sans abonnement). Profil, export, suppression de compte et pages légales restent accessibles.
 
 ## 10. Ajouter une nouvelle catégorie
 

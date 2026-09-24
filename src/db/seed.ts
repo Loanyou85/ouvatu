@@ -8,7 +8,7 @@ import type { Place, StructuredData } from "@/types/schemas";
  * "Exemple" in the UI. Unknown facts are left null — like real results.
  */
 
-const EXAMPLE_URL = "https://noma.app/exemples";
+const EXAMPLE_URL = "https://ouvatu.app/exemples";
 
 function place(name: string, kind: Place["kind"], city: string, country: string, coords: [number, number] | null, description: string | null = null, cuisine: string | null = null): Place {
   return {
@@ -38,7 +38,7 @@ function example(input: Omit<NewContentItem, "entities" | "isExample" | "isSaved
     isExample: true,
     sourceUrl: `${EXAMPLE_URL}/${slug}`,
     sourcePlatform: "web",
-    sourceAuthor: "NOMA",
+    sourceAuthor: "OUVATU",
   };
 }
 

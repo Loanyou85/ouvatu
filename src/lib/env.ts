@@ -16,6 +16,7 @@ export const env = {
 
   stripeSecretKey: read("STRIPE_SECRET_KEY"),
   stripeWebhookSecret: read("STRIPE_WEBHOOK_SECRET"),
+  stripePriceWeekly: read("STRIPE_PRICE_PREMIUM_WEEKLY"),
   stripePriceMonthly: read("STRIPE_PRICE_PREMIUM_MONTHLY"),
   stripePriceYearly: read("STRIPE_PRICE_PREMIUM_YEARLY"),
 
@@ -37,14 +38,14 @@ export const env = {
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
-  localDbPath: read("NOMA_LOCAL_DB_PATH"),
-  demoBilling: read("NOMA_DEMO_BILLING") === "true",
-  enableExamples: read("NOMA_ENABLE_EXAMPLES"),
+  localDbPath: read("OUVATU_LOCAL_DB_PATH"),
+  demoBilling: read("OUVATU_DEMO_BILLING") === "true",
+  enableExamples: read("OUVATU_ENABLE_EXAMPLES"),
   isProduction: process.env.NODE_ENV === "production",
 };
 
 export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);
-export const isStripeConfigured = Boolean(env.stripeSecretKey && env.stripePriceMonthly && env.stripePriceYearly);
+export const isStripeConfigured = Boolean(env.stripeSecretKey && env.stripePriceWeekly && env.stripePriceMonthly && env.stripePriceYearly);
 
 /** Simulated checkout is allowed only outside production or when explicitly enabled. */
 export const isMockBillingAllowed = !isStripeConfigured && (!env.isProduction || env.demoBilling);

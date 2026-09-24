@@ -4,7 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/ui/input";
-import { PREMIUM_OFFERS, formatPrice, type BillingInterval } from "@/config/plans";
+import { OFFER_ORDER, PREMIUM_OFFERS, formatPrice, type BillingInterval } from "@/config/plans";
 import { cn } from "@/lib/utils";
 
 export function PlanPicker() {
@@ -32,7 +32,7 @@ export function PlanPicker() {
   return (
     <div className="space-y-3">
       <FormError message={error} />
-      {(["year", "month"] as const).map((key) => {
+      {OFFER_ORDER.map((key) => {
         const offer = PREMIUM_OFFERS[key];
         const active = interval === key;
         const perMonth = key === "year" ? formatPrice(Math.round(offer.amountCents / 12)) : null;
@@ -55,7 +55,7 @@ export function PlanPicker() {
             </span>
             <span className="text-right">
               <span className="block text-lg font-extrabold">{formatPrice(offer.amountCents)}</span>
-              <span className="text-xs text-muted">/{key === "year" ? "an" : "mois"}</span>
+              <span className="text-xs text-muted">/{offer.unit}</span>
             </span>
           </button>
         );

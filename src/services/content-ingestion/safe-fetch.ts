@@ -11,7 +11,7 @@ import net from "node:net";
 export class FetchBlockedError extends Error {}
 
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; NOMA-Bot/1.0; +https://noma.app/bot) AppleWebKit/537.36 (KHTML, like Gecko)";
+  "Mozilla/5.0 (compatible; ouvatu-Bot/1.0; +https://ouvatu.app/bot) AppleWebKit/537.36 (KHTML, like Gecko)";
 
 function isPrivateIp(ip: string): boolean {
   if (net.isIPv4(ip)) {

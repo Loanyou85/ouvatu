@@ -4,9 +4,13 @@ export const ANALYSIS_ERRORS: Record<string, { title: string; hint: string }> = 
     title: "Ce lien ne semble pas valide.",
     hint: "Copie le lien complet depuis l'application (bouton Partager → Copier le lien).",
   },
+  subscription_required: {
+    title: "Un abonnement est nécessaire pour analyser un lien.",
+    hint: "Choisis une offre pour commencer à transformer tes découvertes.",
+  },
   quota_exceeded: {
-    title: "Tu as utilisé toutes tes analyses du mois.",
-    hint: "Passe à Premium pour continuer à transformer tes découvertes.",
+    title: "Tu as atteint la limite d'analyses de ce mois.",
+    hint: "Ton quota se renouvelle au début du mois prochain.",
   },
   unreachable: {
     title: "On n'a pas réussi à ouvrir ce lien.",
@@ -14,7 +18,7 @@ export const ANALYSIS_ERRORS: Record<string, { title: string; hint: string }> = 
   },
   empty: {
     title: "Ce contenu ne partage presque aucune information publique.",
-    hint: "Colle la légende ou la description dans le champ « Ajouter du texte » pour aider NOMA.",
+    hint: "Colle la légende ou la description dans le champ « Ajouter du texte » pour aider ouvatu.",
   },
   not_understood: {
     title: "On n'a pas réussi à comprendre ce contenu.",

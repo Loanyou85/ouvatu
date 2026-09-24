@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { EmptyState } from "@/components/ui/empty-state";
 import { limitsFor } from "@/config/plans";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { CollectionCard } from "@/features/collections/collection-card";
 import { NewCollectionButton } from "@/features/collections/collection-forms";
 
 export const metadata: Metadata = { title: "Collections" };
 
 export default async function CollectionsPage() {
-  const { store, plan } = await getAppContext();
+  const { store, plan } = await requireSubscribedContext();
   const collections = await store.listCollections();
   const limit = limitsFor(plan).maxCollections;
 
@@ -19,7 +19,7 @@ export default async function CollectionsPage() {
           <h1 className="text-[1.9rem] font-extrabold tracking-[-0.03em]">Collections</h1>
           <p className="text-sm text-muted">
             {collections.length} collection{collections.length > 1 ? "s" : ""}
-            {Number.isFinite(limit) ? ` sur ${limit} (plan gratuit)` : ""}
+            {Number.isFinite(limit) ? ` sur ${limit}` : ""}
           </p>
         </div>
         {collections.length ? <NewCollectionButton /> : null}

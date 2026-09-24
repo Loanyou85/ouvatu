@@ -3,15 +3,18 @@
  * Displayed prices live here; Stripe price IDs come from the environment.
  */
 export type PlanId = "FREE" | "PREMIUM";
-export type BillingInterval = "month" | "year";
+export type BillingInterval = "week" | "month" | "year";
+
+/** Display order of the offers (paywall, landing, legal). */
+export const OFFER_ORDER: BillingInterval[] = ["week", "month", "year"];
 
 export const PLAN_LIMITS = {
+  /** No active subscription: OUVATU has no free tier, everything requires an offer. */
   FREE: {
-    analysesPerMonth: 10,
-    maxSavedItems: 30,
-    maxCollections: 3,
-    /** Number of detected elements visible in a result before the paywall. */
-    previewEntities: 4,
+    analysesPerMonth: 0,
+    maxSavedItems: 0,
+    maxCollections: 0,
+    previewEntities: 0,
   },
   PREMIUM: {
     analysesPerMonth: 500,
@@ -31,17 +34,28 @@ export interface PriceOffer {
   amountCents: number;
   currency: "EUR";
   /** Env var holding the Stripe Price ID. */
-  stripePriceEnv: "STRIPE_PRICE_PREMIUM_MONTHLY" | "STRIPE_PRICE_PREMIUM_YEARLY";
+  stripePriceEnv: "STRIPE_PRICE_PREMIUM_WEEKLY" | "STRIPE_PRICE_PREMIUM_MONTHLY" | "STRIPE_PRICE_PREMIUM_YEARLY";
+  /** Short unit for "/semaine", "/mois", "/an". */
+  unit: string;
   highlight?: string;
 }
 
 export const PREMIUM_OFFERS: Record<BillingInterval, PriceOffer> = {
+  week: {
+    interval: "week",
+    label: "Hebdomadaire",
+    amountCents: 499,
+    currency: "EUR",
+    stripePriceEnv: "STRIPE_PRICE_PREMIUM_WEEKLY",
+    unit: "semaine",
+  },
   month: {
     interval: "month",
     label: "Mensuel",
     amountCents: 999,
     currency: "EUR",
     stripePriceEnv: "STRIPE_PRICE_PREMIUM_MONTHLY",
+    unit: "mois",
   },
   year: {
     interval: "year",
@@ -49,12 +63,21 @@ export const PREMIUM_OFFERS: Record<BillingInterval, PriceOffer> = {
     amountCents: 4999,
     currency: "EUR",
     stripePriceEnv: "STRIPE_PRICE_PREMIUM_YEARLY",
+    unit: "an",
     highlight: "−58 %",
   },
 };
 
 export function formatPrice(amountCents: number, currency = "EUR"): string {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(amountCents / 100);
+}
+
+/** Approximate monthly value of an offer (admin MRR estimate). */
+export function monthlyEquivalentCents(interval: BillingInterval): number {
+  const { amountCents } = PREMIUM_OFFERS[interval];
+  if (interval === "week") return (amountCents * 52) / 12;
+  if (interval === "year") return amountCents / 12;
+  return amountCents;
 }
 
 export function limitsFor(plan: PlanId) {

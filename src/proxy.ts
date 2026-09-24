@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED = ["/library", "/collections", "/items", "/search", "/lists", "/profile", "/premium", "/onboarding", "/admin", "/add"];
-const LOCAL_SESSION_COOKIE = "noma_session";
+const LOCAL_SESSION_COOKIE = "ouvatu_session";
 
 /**
  * Runs before routes: refreshes the Supabase auth session cookies and sends

@@ -13,7 +13,7 @@ export async function GET() {
   return new NextResponse(JSON.stringify({ exportedAt: new Date().toISOString(), ...data }, null, 2), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="noma-export-${new Date().toISOString().slice(0, 10)}.json"`,
+      "content-disposition": `attachment; filename="ouvatu-export-${new Date().toISOString().slice(0, 10)}.json"`,
       "cache-control": "no-store",
     },
   });

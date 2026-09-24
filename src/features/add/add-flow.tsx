@@ -209,7 +209,7 @@ export function AddFlow({ initialUrl = "", autoStart = false, onDone }: { initia
         <div className="rounded-2xl bg-error-soft px-4 py-3.5" role="alert">
           <p className="font-bold text-error">{error.title}</p>
           <p className="mt-0.5 text-sm text-ink/80">{error.hint}</p>
-          {error.code === "quota_exceeded" ? (
+          {error.code === "subscription_required" ? (
             <Link href="/premium" onClick={onDone} className={buttonClass("accent", "sm", "mt-3")}>
               Débloquer mon espace
             </Link>
@@ -277,7 +277,7 @@ export function AddFlow({ initialUrl = "", autoStart = false, onDone }: { initia
         {phase === "error" ? "Réessayer" : "Analyser"}
         {phase !== "error" ? <ArrowRight className="h-5 w-5" /> : null}
       </Button>
-      <p className="text-center text-xs text-subtle">NOMA lit uniquement les informations publiques du lien.</p>
+      <p className="text-center text-xs text-subtle">OUVATU lit uniquement les informations publiques du lien.</p>
     </form>
   );
 }

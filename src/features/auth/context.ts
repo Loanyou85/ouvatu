@@ -18,3 +18,14 @@ export async function requireOnboardedContext() {
   if (!ctx.profile.onboardingCompleted) redirect("/onboarding");
   return ctx;
 }
+
+/**
+ * There is no free tier: every product page requires an active subscription.
+ * Without one, users land on the offers page (/premium). Profile, legal pages
+ * and billing pages stay reachable (account deletion, export, checkout).
+ */
+export async function requireSubscribedContext() {
+  const ctx = await requireOnboardedContext();
+  if (ctx.plan !== "PREMIUM") redirect("/premium");
+  return ctx;
+}

@@ -1,4 +1,4 @@
-import { ArrowRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { AddTrigger } from "@/features/add/add-provider";
 import { CollectionCard } from "@/features/collections/collection-card";
 import { ItemGrid } from "@/features/items/item-card";
 import { examplesEnabled } from "@/lib/env";
-import { getUsage } from "@/services/billing/entitlements";
 import type { UserDataStore } from "@/db/types";
 import type { UserProfile } from "@/types/domain";
 import { LoadExamplesButton } from "./load-examples-button";
@@ -18,11 +17,10 @@ import { LoadExamplesButton } from "./load-examples-button";
 const PLATFORMS = ["TikTok", "Instagram", "YouTube", "Pinterest", "Web"];
 
 export async function HomeView({ store, profile }: { store: UserDataStore; profile: UserProfile }) {
-  const [items, collections, counts, usage, shopping, saved] = await Promise.all([
+  const [items, collections, counts, shopping, saved] = await Promise.all([
     store.listItems({ limit: 8 }),
     store.listCollections(),
     store.categoryCounts(),
-    getUsage(store),
     store.listShopping(),
     store.listSaved(),
   ]);
@@ -56,11 +54,6 @@ export async function HomeView({ store, profile }: { store: UserDataStore; profi
             ))}
           </div>
         </div>
-        {usage.plan === "FREE" ? (
-          <Link href="/premium" className="relative mt-8 inline-flex items-center gap-2 text-xs font-semibold text-white/60 hover:text-white sm:absolute sm:bottom-6 sm:right-8 sm:mt-0">
-            {usage.analysesThisMonth}/{usage.analysesLimit} analyses ce mois-ci · Passer à Premium <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        ) : null}
       </section>
 
       <section>

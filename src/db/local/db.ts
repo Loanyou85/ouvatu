@@ -66,13 +66,13 @@ const emptyDb = (): LocalDb => ({
 });
 
 function dbPath(): string {
-  return process.env.NOMA_LOCAL_DB_PATH || path.join(process.cwd(), ".data", "noma-local-db.json");
+  return process.env.OUVATU_LOCAL_DB_PATH || path.join(process.cwd(), ".data", "ouvatu-local-db.json");
 }
 
-const globalRef = globalThis as unknown as { __nomaLocalDb?: LocalDb };
+const globalRef = globalThis as unknown as { __ouvatuLocalDb?: LocalDb };
 
 export function getLocalDb(): LocalDb {
-  if (globalRef.__nomaLocalDb) return globalRef.__nomaLocalDb;
+  if (globalRef.__ouvatuLocalDb) return globalRef.__ouvatuLocalDb;
   let db = emptyDb();
   try {
     const file = dbPath();
@@ -82,7 +82,7 @@ export function getLocalDb(): LocalDb {
   } catch (error) {
     console.error("[local-db] could not read database, starting empty", error);
   }
-  globalRef.__nomaLocalDb = db;
+  globalRef.__ouvatuLocalDb = db;
   return db;
 }
 

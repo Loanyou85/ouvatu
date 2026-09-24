@@ -28,7 +28,7 @@ export async function createCollectionAction(
   const limit = limitsFor(plan).maxCollections;
   if ((await store.listCollections()).length >= limit) {
     await track(user.id, "paywall_viewed", { reason: "collections_limit" });
-    return { ok: false, error: `Le plan gratuit est limité à ${limit} collections.`, code: "limit" };
+    return { ok: false, error: limit === 0 ? "Un abonnement est nécessaire pour créer des collections." : `Tu as atteint la limite de ${limit} collections.`, code: "limit" };
   }
   const collection = await store.createCollection(parsedName.data, EmojiSchema.parse(emoji));
   await track(user.id, "collection_created", {});

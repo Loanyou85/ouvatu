@@ -1,5 +1,5 @@
 import { BRAND } from "@/config/brand";
-import { PLAN_LIMITS, PREMIUM_OFFERS, formatPrice } from "@/config/plans";
+import { OFFER_ORDER, PLAN_LIMITS, PREMIUM_OFFERS, formatPrice } from "@/config/plans";
 
 /**
  * Legal copy (FR). Templates to be reviewed by a lawyer before launch:
@@ -73,15 +73,14 @@ export const LEGAL_PAGES: Record<string, LegalPage> = {
       {
         heading: "Contenus soumis",
         body: [
-          "Tu ne soumets que des liens vers des contenus auxquels tu as légalement accès. Les contenus d'origine restent la propriété de leurs auteurs ; NOMA conserve un lien vers la source.",
-          "Les fiches sont générées automatiquement à partir d'informations publiques et peuvent être incomplètes. Quand une information n'est pas disponible, NOMA l'indique au lieu de l'inventer. Vérifie les informations importantes (horaires, prix, allergènes…) auprès de la source.",
+          "Tu ne soumets que des liens vers des contenus auxquels tu as légalement accès. Les contenus d'origine restent la propriété de leurs auteurs ; OUVATU conserve un lien vers la source.",
+          "Les fiches sont générées automatiquement à partir d'informations publiques et peuvent être incomplètes. Quand une information n'est pas disponible, OUVATU l'indique au lieu de l'inventer. Vérifie les informations importantes (horaires, prix, allergènes…) auprès de la source.",
         ],
       },
       {
         heading: "Offres",
         body: [
-          `Gratuit : ${PLAN_LIMITS.FREE.analysesPerMonth} analyses par mois, ${PLAN_LIMITS.FREE.maxSavedItems} éléments, ${PLAN_LIMITS.FREE.maxCollections} collections, aperçu des résultats.`,
-          `Premium : ${formatPrice(PREMIUM_OFFERS.month.amountCents)}/mois ou ${formatPrice(PREMIUM_OFFERS.year.amountCents)}/an, renouvelé automatiquement, résiliable à tout moment depuis ton profil ; la résiliation prend effet à la fin de la période en cours.`,
+          `L'utilisation du service nécessite un abonnement : ${OFFER_ORDER.map((k) => `${PREMIUM_OFFERS[k].label.toLowerCase()} à ${formatPrice(PREMIUM_OFFERS[k].amountCents)}/${PREMIUM_OFFERS[k].unit}`).join(", ")}. L'abonnement est renouvelé automatiquement et résiliable à tout moment depuis ton profil ; la résiliation prend effet à la fin de la période en cours. Usage raisonnable : ${PLAN_LIMITS.PREMIUM.analysesPerMonth} analyses par mois.`,
           "Droit de rétractation : en demandant l'accès immédiat au service, tu reconnais que le service commence avant la fin du délai de rétractation de 14 jours.",
         ],
       },

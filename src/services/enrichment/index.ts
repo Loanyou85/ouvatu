@@ -18,7 +18,7 @@ async function getJson<T>(url: string, timeoutMs = 5000): Promise<T | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: controller.signal, headers: { "user-agent": "NOMA/1.0" } });
+    const res = await fetch(url, { signal: controller.signal, headers: { "user-agent": "ouvatu/1.0" } });
     return res.ok ? ((await res.json()) as T) : null;
   } catch {
     return null;

@@ -4,7 +4,7 @@ import type { Platform, StructuredData } from "@/types/schemas";
 
 export type AnalysisStatus = "pending" | "fetching" | "analyzing" | "enriching" | "completed" | "failed";
 
-/** How an input reached NOMA. Every channel goes through the same pipeline. */
+/** How an input reached ouvatu. Every channel goes through the same pipeline. */
 export type InputChannel = "paste" | "share_extension" | "browser_extension" | "direct_import";
 
 export interface Source {
@@ -166,7 +166,7 @@ export interface Subscription {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   status: SubscriptionStatus;
-  interval: "month" | "year" | null;
+  interval: "week" | "month" | "year" | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   updatedAt: string;

@@ -11,6 +11,7 @@ export default async function RootPage() {
 
   const { store, profile } = await getAppContext();
   if (!profile.onboardingCompleted) redirect("/onboarding");
+  if (profile.plan !== "PREMIUM") redirect("/premium");
   return (
     <AppShell profile={profile}>
       <HomeView store={store} profile={profile} />

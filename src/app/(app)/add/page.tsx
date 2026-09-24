@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import { AddFlow } from "@/features/add/add-flow";
+import { requireSubscribedContext } from "@/features/auth/context";
 
 export const metadata: Metadata = { title: "Ajouter une inspiration" };
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = { title: "Ajouter une inspiration" };
  * /add?url=…&text=… and land in the exact same flow and pipeline.
  */
 export default async function AddPage(props: PageProps<"/add">) {
+  await requireSubscribedContext();
   const sp = await props.searchParams;
   const pick = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
   // Share targets often put the URL inside "text".

@@ -100,8 +100,8 @@ describe("premium gating", () => {
       data: { category: "TRAVEL", travel: { destination: null, country: null, cities: [], durationDays: null, bestPeriod: null, budgetText: null, places } },
     } as unknown as ContentItem;
     const free = toItemView(item, "FREE");
-    expect(free.lockedCount).toBe(3);
-    expect(free.data.category === "TRAVEL" && free.data.travel.places).toHaveLength(4);
+    expect(free.lockedCount).toBe(7);
+    expect(free.data.category === "TRAVEL" && free.data.travel.places).toHaveLength(0);
     expect(toItemView(item, "PREMIUM").lockedCount).toBe(0);
   });
 });

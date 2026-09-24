@@ -33,7 +33,7 @@ class NominatimProvider implements MapsProvider {
 
   async geocode(query: string): Promise<Geo | null> {
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=fr&q=${encodeURIComponent(query)}`;
-    const ua = `NOMA/1.0 (${env.mapsContactEmail ?? "contact@noma.app"})`;
+    const ua = `ouvatu/1.0 (${env.mapsContactEmail ?? "contact@ouvatu.app"})`;
     const rows = await fetchJson<{ lat: string; lon: string; display_name: string; importance?: number }[]>(url, {
       "user-agent": ua,
     });

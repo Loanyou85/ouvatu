@@ -17,7 +17,7 @@ export default async function PremiumSuccessPage() {
       </div>
       <h1 className="mt-6 text-3xl font-extrabold tracking-tight">{active ? "Bienvenue dans Premium ✨" : "Paiement reçu"}</h1>
       <p className="mt-2 text-muted">
-        {active ? "Ton espace est débloqué. Profite de tout ce que NOMA détecte." : "On active ton abonnement… Cela prend généralement quelques secondes."}
+        {active ? "Ton espace est débloqué. Profite de tout ce qu'OUVATU détecte." : "On active ton abonnement… Cela prend généralement quelques secondes."}
       </p>
       {!active ? <RefreshSoon /> : null}
       <Link href="/" className={buttonClass("dark", "lg", "mt-8")}>

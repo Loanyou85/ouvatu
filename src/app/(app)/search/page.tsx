@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CATEGORY_META } from "@/config/categories";
-import { getAppContext } from "@/features/auth/context";
+import { requireSubscribedContext } from "@/features/auth/context";
 import { ItemGrid } from "@/features/items/item-card";
 import { SearchBox } from "@/features/search/search-box";
 import { rateLimit } from "@/lib/rate-limit";
@@ -22,7 +22,7 @@ const SUGGESTIONS = [
 export default async function SearchPage(props: PageProps<"/search">) {
   const sp = await props.searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 200) : "";
-  const { store, user } = await getAppContext();
+  const { store, user } = await requireSubscribedContext();
 
   const parsed = q ? parseSearchQuery(q) : null;
   const allowed = q ? rateLimit(`search:${user.id}`, 60, 60_000).ok : true;

@@ -14,7 +14,7 @@ export function getStripe(): Stripe {
 }
 
 function priceIdFor(interval: BillingInterval): string {
-  const id = interval === "year" ? env.stripePriceYearly : env.stripePriceMonthly;
+  const id = { week: env.stripePriceWeekly, month: env.stripePriceMonthly, year: env.stripePriceYearly }[interval];
   if (!id) throw new Error(`${PREMIUM_OFFERS[interval].stripePriceEnv} is not configured`);
   return id;
 }
@@ -64,7 +64,7 @@ export async function syncSubscription(subscription: Stripe.Subscription, fallba
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscription.id,
     status: subscription.status as SubscriptionStatus,
-    interval: interval === "year" ? "year" : interval === "month" ? "month" : null,
+    interval: interval === "year" ? "year" : interval === "month" ? "month" : interval === "week" ? "week" : null,
     currentPeriodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000).toISOString() : null,
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
   });

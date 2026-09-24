@@ -12,7 +12,7 @@ export default async function SignupPage() {
   return (
     <AuthLayout
       title="Crée ton espace"
-      subtitle="Gratuit. Sans carte bancaire. Prêt en 20 secondes."
+      subtitle="Prêt en 20 secondes. Choisis ensuite l'offre qui te convient."
       footer={
         <>
           Déjà un compte ?{" "}

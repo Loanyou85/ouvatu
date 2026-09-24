@@ -31,7 +31,7 @@ export async function saveItemAction(id: string): Promise<ActionResult> {
   const limit = limitsFor(plan).maxSavedItems;
   if ((await store.countSavedItems()) >= limit) {
     await track(user.id, "paywall_viewed", { reason: "library_limit" });
-    return { ok: false, error: `Ta bibliothèque gratuite est pleine (${limit} éléments).`, code: "limit" };
+    return { ok: false, error: limit === 0 ? "Un abonnement est nécessaire pour enregistrer." : `Ta bibliothèque est pleine (${limit} éléments).`, code: "limit" };
   }
   await store.updateItem(id, { isSaved: true });
   await track(user.id, "item_saved", { category: item.category });

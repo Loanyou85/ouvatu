@@ -58,12 +58,12 @@ export default async function ProfilePage() {
                   <Sparkles className="h-5 w-5 text-[#a7a2ff]" /> Premium
                 </>
               ) : (
-                "Gratuit"
+                "Aucun abonnement"
               )}
             </p>
             {premium && subscription ? (
               <p className="mt-1 text-sm text-white/60">
-                {subscription.interval === "year" ? "Annuel" : "Mensuel"}
+                {subscription.interval ? PREMIUM_OFFERS[subscription.interval].label : "Premium"}
                 {subscription.currentPeriodEnd
                   ? ` · ${subscription.cancelAtPeriodEnd ? "se termine le" : "renouvellement le"} ${new Date(subscription.currentPeriodEnd).toLocaleDateString("fr-FR")}`
                   : ""}
@@ -73,17 +73,18 @@ export default async function ProfilePage() {
         </div>
         {!premium ? (
           <div className="mt-5 space-y-4">
-            <UsageBar label="Analyses ce mois-ci" used={usage.analysesThisMonth} limit={usage.analysesLimit} />
-            <UsageBar label="Bibliothèque" used={usage.savedItems} limit={usage.savedLimit} />
-            <UsageBar label="Collections" used={usage.collections} limit={usage.collectionsLimit} />
+            <p className="text-sm text-muted">Choisis une offre pour commencer à transformer tes découvertes.</p>
             <Link href="/premium" className={buttonClass("accent", "lg", "w-full")}>
-              Passer à Premium · dès {formatPrice(Math.round(PREMIUM_OFFERS.year.amountCents / 12))}/mois
+              Voir les offres · dès {formatPrice(PREMIUM_OFFERS.week.amountCents)}/semaine
             </Link>
           </div>
         ) : (
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-5 space-y-4">
+            <UsageBar label="Analyses ce mois-ci" used={usage.analysesThisMonth} limit={usage.analysesLimit} />
+            <div className="flex flex-wrap gap-2">
             {isStripeConfigured && subscription?.stripeCustomerId ? <ManageSubscriptionButton /> : null}
             {isMockBillingAllowed && !subscription?.stripeCustomerId ? <DemoCancelButton /> : null}
+            </div>
           </div>
         )}
       </Card>
