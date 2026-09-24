@@ -51,6 +51,11 @@ export const env = {
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
+  /** Accounts that are Premium for life without a Stripe subscription (owner, team…). */
+  lifetimePremiumEmails: (read("LIFETIME_PREMIUM_EMAILS") ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
   localDbPath: read("OUVATU_LOCAL_DB_PATH"),
   demoBilling: read("OUVATU_DEMO_BILLING") === "true",
   enableExamples: read("OUVATU_ENABLE_EXAMPLES"),

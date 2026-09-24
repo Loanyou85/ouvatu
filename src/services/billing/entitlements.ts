@@ -1,6 +1,18 @@
 import "server-only";
 import { limitsFor, type PlanId, type PremiumFeature } from "@/config/plans";
 import type { UserDataStore } from "@/db/types";
+import { env } from "@/lib/env";
+
+/** Emails listed in LIFETIME_PREMIUM_EMAILS (server-side env var) are Premium for life. */
+export function isLifetimePremium(email: string | null | undefined): boolean {
+  return Boolean(email) && env.lifetimePremiumEmails.includes(email!.trim().toLowerCase());
+}
+
+/** Plan stored in the database, upgraded to PREMIUM for lifetime accounts. */
+export function effectivePlan(profile: { plan: PlanId; email: string } | null): PlanId {
+  if (!profile) return "FREE";
+  return profile.plan === "PREMIUM" || isLifetimePremium(profile.email) ? "PREMIUM" : "FREE";
+}
 
 /**
  * Plan resolution is ALWAYS server-side, from the database (users.plan is
@@ -8,8 +20,7 @@ import type { UserDataStore } from "@/db/types";
  * client never tells us whether a user is premium.
  */
 export async function getPlan(store: UserDataStore): Promise<PlanId> {
-  const profile = await store.getProfile();
-  return profile?.plan === "PREMIUM" ? "PREMIUM" : "FREE";
+  return effectivePlan(await store.getProfile());
 }
 
 export function startOfMonthIso(date = new Date()): string {

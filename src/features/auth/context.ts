@@ -4,6 +4,7 @@ import { cache } from "react";
 import { getUserStore } from "@/db";
 import { env, isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { effectivePlan } from "@/services/billing/entitlements";
 import { requireSessionUser } from "@/services/users/auth";
 
 /**
@@ -34,6 +35,7 @@ export const getAppContext = cache(async () => {
   }
   if (!profile && (await ensureProfile(user.id, user.email))) profile = await store.getProfile();
   if (!profile) redirect("/logout");
+  profile = { ...profile, plan: effectivePlan(profile) };
   return { user, store, profile, plan: profile.plan };
 });
 

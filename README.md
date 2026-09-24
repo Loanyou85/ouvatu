@@ -49,6 +49,7 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` | Tuiles de carte (OSM par défaut) |
 | `TMDB_API_KEY`, `YOUTUBE_API_KEY`, `META_OEMBED_TOKEN` | Enrichissements optionnels |
 | `ADMIN_EMAILS` | Emails autorisés sur `/admin` |
+| `LIFETIME_PREMIUM_EMAILS` | Emails Premium à vie, sans paiement (séparés par des virgules) |
 | `APP_URL` | URL publique du site (redirections Stripe / Auth) |
 
 ## 3. Supabase
