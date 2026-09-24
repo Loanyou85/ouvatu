@@ -23,7 +23,13 @@ async function ensureProfile(id: string, email: string): Promise<boolean> {
 export const getAppContext = cache(async () => {
   const user = await requireSessionUser();
   const store = await getUserStore();
-  let profile = await store.getProfile();
+  let profile;
+  try {
+    profile = await store.getProfile();
+  } catch (error) {
+    console.error("[auth] could not load the profile (database not ready?)", error);
+    redirect("/setup");
+  }
   if (!profile && (await ensureProfile(user.id, user.email))) profile = await store.getProfile();
   if (!profile) redirect("/logout");
   return { user, store, profile, plan: profile.plan };

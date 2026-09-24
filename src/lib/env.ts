@@ -13,9 +13,17 @@ function read(...names: string[]): string | undefined {
   return undefined;
 }
 
+/** Accept common copy/paste variants: missing https://, trailing slash, /rest/v1 suffix. */
+function normalizeSupabaseUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  let url = value.replace(/^["']|["']$/g, "").trim();
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  return url.replace(/\/+(rest|auth)\/v1\/?$/i, "").replace(/\/+$/, "");
+}
+
 export const env = {
   // Only used server-side: the private names (SUPABASE_URL…) are preferred, NEXT_PUBLIC_ kept for compatibility.
-  supabaseUrl: read("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"),
+  supabaseUrl: normalizeSupabaseUrl(read("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL")),
   supabaseAnonKey: read("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
 

@@ -11,9 +11,15 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Oups, quelque chose s&apos;est mal passé.</h1>
       <p className="mt-2 text-muted">Ce n&apos;est pas toi, c&apos;est nous. Réessaie dans un instant.</p>
       {error.digest ? <p className="mt-2 text-xs text-subtle">Code : {error.digest}</p> : null}
-      <Button variant="dark" className="mt-6" onClick={reset}>
-        Réessayer
-      </Button>
+      <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <Button variant="dark" onClick={reset}>
+          Réessayer
+        </Button>
+        {/* Plain link on purpose: the diagnostic must load even if client routing is broken. */}
+        <a href="/setup" className="inline-flex h-11 items-center rounded-full border border-line bg-card px-5 text-[0.95rem] font-semibold hover:bg-hover">
+          Voir le diagnostic
+        </a>
+      </div>
     </div>
   );
 }

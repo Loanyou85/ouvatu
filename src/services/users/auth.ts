@@ -31,9 +31,15 @@ export type AuthResult = { ok: true; needsEmailConfirmation?: boolean } | { ok: 
 /** Current authenticated user, validated server-side. Cached per request. */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (isSupabaseConfigured) {
-    const supabase = await createSupabaseServerClient();
-    const { data } = await supabase.auth.getUser();
-    return data.user ? { id: data.user.id, email: data.user.email ?? "" } : null;
+    try {
+      const supabase = await createSupabaseServerClient();
+      const { data } = await supabase.auth.getUser();
+      return data.user ? { id: data.user.id, email: data.user.email ?? "" } : null;
+    } catch (error) {
+      // A misconfigured Supabase must not take the whole site down (landing, login…).
+      console.error("[auth] could not read the Supabase session", error);
+      return null;
+    }
   }
   if (localAuthUnavailable()) return null;
   const cookieStore = await cookies();
