@@ -52,7 +52,7 @@ export function TravelView({
             ))}
           </div>
         ) : null}
-        <AddPlaces itemId={itemId} defaultCity={defaultCity} empty />
+        <AddPlaces itemId={itemId} defaultCity={defaultCity} empty={false} />
       </div>
     );
   }

@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { env } from "@/lib/env";
 import type { NormalizedContent } from "@/services/content-ingestion/types";
-import { AiEnvelopeSchema, type AiEnvelope } from "../ai-schema";
+import { AiCategoryStepSchema, assembleEnvelope, detailStepSchema, type AiEnvelope } from "../ai-schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
 import { AnalysisError, type AnalysisProvider } from "./types";
 
@@ -25,13 +25,20 @@ export class AnthropicProvider implements AnalysisProvider {
     this.client = new Anthropic({ apiKey, timeout: 90_000, maxRetries: 2 });
   }
 
-  private async call(content: NormalizedContent, model: string, withFallbacks: boolean): Promise<AiEnvelope> {
+  private async parse<T>(
+    content: NormalizedContent,
+    model: string,
+    withFallbacks: boolean,
+    format: Parameters<typeof betaZodOutputFormat>[0],
+    instruction: string,
+    effort: "low" | "medium",
+  ): Promise<T> {
     const response = await this.client.beta.messages.parse({
       model,
       max_tokens: 16000,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserPrompt(content) }],
-      output_config: { format: betaZodOutputFormat(AiEnvelopeSchema), effort: "medium" },
+      messages: [{ role: "user", content: `${buildUserPrompt(content)}\n\n${instruction}` }],
+      output_config: { format: betaZodOutputFormat(format), effort },
       ...(withFallbacks ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
     });
     if (response.stop_reason === "refusal") {
@@ -43,7 +50,34 @@ export class AnthropicProvider implements AnalysisProvider {
     if (!response.parsed_output) {
       throw new AnalysisError("The model did not return a valid structure", "invalid_output");
     }
-    return response.parsed_output;
+    return response.parsed_output as T;
+  }
+
+  /** Two small structured calls (one big schema exceeds the grammar size limit). */
+  private async call(content: NormalizedContent, model: string, withFallbacks: boolean): Promise<AiEnvelope> {
+    const step1 = await this.parse<{ category: AiEnvelope["category"]; confidence: number }>(
+      content,
+      model,
+      withFallbacks,
+      AiCategoryStepSchema,
+      "Étape 1 : indique seulement la catégorie la plus adaptée et ta confiance.",
+      "low",
+    );
+    const instruction = `Étape 2 : la catégorie retenue est ${step1.category}. Remplis la fiche de cette catégorie.`;
+    let detail: Record<string, unknown>;
+    try {
+      detail = await this.parse(content, model, withFallbacks, detailStepSchema(step1.category), instruction, "medium");
+    } catch (error) {
+      // Still too large for the grammar compiler: retry without the extra "locations" list.
+      if (!(error instanceof Anthropic.BadRequestError) || !/grammar|schema/i.test(error.message)) throw error;
+      console.warn("[ai] detail schema rejected, retrying without locations:", error.message);
+      detail = await this.parse(content, model, withFallbacks, detailStepSchema(step1.category, false), instruction, "medium");
+    }
+    try {
+      return assembleEnvelope(step1.category, detail);
+    } catch {
+      throw new AnalysisError("The model did not return a valid structure", "invalid_output");
+    }
   }
 
   async analyze(content: NormalizedContent): Promise<AiEnvelope> {

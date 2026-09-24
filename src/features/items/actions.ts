@@ -260,21 +260,6 @@ export async function addPlacesAction(itemId: string, text: string, city: string
   };
 }
 
-/** Wrong category (e.g. a place filed as fashion): turn the card into a places card to fill by hand. */
-export async function convertToPlacesAction(itemId: string): Promise<ActionResult> {
-  const loaded = await loadItem(itemId);
-  if (!loaded) return notFound;
-  const { item, store } = loaded;
-  if (item.data.category === "TRAVEL" || item.data.category === "PLACES") return { ok: true };
-  const data = {
-    category: "TRAVEL" as const,
-    travel: { destination: null, country: null, cities: [], durationDays: null, bestPeriod: null, budgetText: null, places: [] },
-  };
-  await store.updateItem(itemId, { category: "TRAVEL", data, entities: [], userData: { ...item.userData, itinerary: undefined } });
-  revalidatePath(`/items/${itemId}`);
-  return { ok: true, message: "Fiche transformée : ajoute les lieux" };
-}
-
 export async function trackPremiumClickAction(action: string): Promise<void> {
   const { user } = await getAppContext();
   await track(user.id, "premium_action_clicked", { action: action.slice(0, 40) });

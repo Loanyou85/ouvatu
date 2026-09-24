@@ -431,6 +431,15 @@ export class HeuristicProvider implements AnalysisProvider {
       default:
         env.other = { keyPoints: [summary] };
     }
+
+    // Without the AI, specific spots are rarely identifiable — but the city named in the
+    // caption or hashtags (#toronto) is real: pin it so the card still has its map.
+    const where = detectCity(corpus);
+    if (where) {
+      const pin = { name: where.city, kind: "other" as const, description: null, address: null, city: where.city, country: where.country, priceText: null, cuisine: null };
+      if (env.travel && env.travel.places.length === 0) env.travel.places.push(pin);
+      else if (!env.travel && !env.places?.places.length) env.locations = [pin];
+    }
     return env;
   }
 }

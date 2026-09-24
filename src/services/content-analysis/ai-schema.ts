@@ -129,3 +129,70 @@ export const AiEnvelopeSchema = z.object({
   locations: z.array(AiPlace),
 });
 export type AiEnvelope = z.infer<typeof AiEnvelopeSchema>;
+
+/**
+ * The full envelope above is too large to be compiled as one structured-output
+ * grammar. The AI therefore answers in two small steps:
+ *   1. the category only,
+ *   2. the fields of THAT category (+ the places mentioned, for non-place categories).
+ */
+export const AiCategoryStepSchema = z.object({ category: z.enum(CATEGORIES), confidence: z.number() });
+
+type BlockKey = "recipe" | "travel" | "places" | "products" | "screen" | "books" | "fashion" | "decor" | "fitness" | "other";
+
+export const BLOCK_FOR_CATEGORY: Record<(typeof CATEGORIES)[number], BlockKey> = {
+  RECIPES: "recipe",
+  TRAVEL: "travel",
+  PLACES: "places",
+  PRODUCTS: "products",
+  MOVIES: "screen",
+  SERIES: "screen",
+  BOOKS: "books",
+  FASHION: "fashion",
+  HOME_DECOR: "decor",
+  FITNESS: "fitness",
+  OTHER: "other",
+};
+
+/** Step-2 schema: common fields + the single block of the chosen category. */
+export function detailStepSchema(category: (typeof CATEGORIES)[number], includeLocations = true) {
+  const key = BLOCK_FOR_CATEGORY[category];
+  const block = (AiEnvelopeSchema.shape[key] as z.ZodNullable<z.ZodType>).unwrap();
+  const withLocations = includeLocations && category !== "TRAVEL" && category !== "PLACES";
+  return z.object({
+    title: z.string(),
+    summary: z.string(),
+    tags: list,
+    confidence: z.number(),
+    [key]: block,
+    ...(withLocations ? { locations: z.array(AiPlace) } : {}),
+  });
+}
+
+const EMPTY_BLOCKS = {
+  recipe: null,
+  travel: null,
+  places: null,
+  products: null,
+  screen: null,
+  books: null,
+  fashion: null,
+  decor: null,
+  fitness: null,
+  other: null,
+};
+
+/** Rebuilds the full envelope from the two steps. */
+export function assembleEnvelope(category: (typeof CATEGORIES)[number], detail: Record<string, unknown>): AiEnvelope {
+  const key = BLOCK_FOR_CATEGORY[category];
+  return AiEnvelopeSchema.parse({
+    ...EMPTY_BLOCKS,
+    category,
+    confidence: detail.confidence,
+    title: detail.title,
+    summary: detail.summary,
+    tags: detail.tags ?? [],
+    [key]: detail[key] ?? null,
+    locations: Array.isArray(detail.locations) ? detail.locations : [],
+  });
+}
