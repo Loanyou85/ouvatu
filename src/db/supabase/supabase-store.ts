@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { scoreItem } from "@/services/search/local-score";
 import type { Category } from "@/config/categories";
 import type { PlanId } from "@/config/plans";
 import type {
@@ -147,10 +148,17 @@ function mapCollection(r: Row): Collection {
   };
 }
 
+/**
+ * `trusted` = the client uses the service role (server-side only). Every query
+ * below is explicitly filtered on this.userId, so the store never reads or
+ * writes another user's rows even though RLS is bypassed. RPCs that rely on
+ * auth.uid() are replaced by equivalent user-filtered queries in that mode.
+ */
 export class SupabaseUserStore implements UserDataStore {
   constructor(
     private readonly sb: SupabaseClient,
     readonly userId: string,
+    private readonly trusted = false,
   ) {}
 
   async getProfile() {
@@ -168,7 +176,17 @@ export class SupabaseUserStore implements UserDataStore {
   }
 
   async incrementAnalysisCount() {
-    check(await this.sb.rpc("increment_analysis_count"));
+    if (!this.trusted) {
+      check(await this.sb.rpc("increment_analysis_count"));
+      return;
+    }
+    const row = check(await this.sb.from("users").select("analysis_count").eq("id", this.userId).maybeSingle()) as Row | null;
+    check(
+      await this.sb
+        .from("users")
+        .update({ analysis_count: Number(row?.analysis_count ?? 0) + 1 })
+        .eq("id", this.userId),
+    );
   }
 
   async getSubscription() {
@@ -280,7 +298,11 @@ export class SupabaseUserStore implements UserDataStore {
     if (filter.since) query = query.gte("created_at", filter.since);
     if (filter.collectionId) {
       const links = check(
-        await this.sb.from("collection_items").select("content_item_id").eq("collection_id", filter.collectionId),
+        await this.sb
+          .from("collection_items")
+          .select("content_item_id")
+          .eq("collection_id", filter.collectionId)
+          .eq("user_id", this.userId),
       ) as Row[];
       if (links.length === 0) return [];
       query = query.in(
@@ -326,6 +348,7 @@ export class SupabaseUserStore implements UserDataStore {
   }
 
   async search(params: SearchParams) {
+    if (this.trusted) return this.searchInApp(params);
     const rows = check(
       await this.sb.rpc("search_content_items", {
         terms: params.terms,
@@ -335,6 +358,27 @@ export class SupabaseUserStore implements UserDataStore {
       }),
     ) as Row[];
     return rows.map(mapItem);
+  }
+
+  /** Same ranking as the SQL function, computed in the app (service-role mode). */
+  private async searchInApp(params: SearchParams) {
+    let query = this.sb
+      .from("content_items")
+      .select(`${ITEM_COLUMNS},collection_items(collection_id)`)
+      .eq("user_id", this.userId)
+      .eq("is_saved", true);
+    if (params.categories?.length) query = query.in("category", params.categories);
+    const rows = (check(await query.order("created_at", { ascending: false }).limit(1000)) as Row[]).map(mapItem);
+    return rows
+      .filter((i) => {
+        if (params.maxTotalMinutes == null) return true;
+        return i.data.category === "RECIPES" && i.data.recipe.totalMinutes != null && i.data.recipe.totalMinutes <= params.maxTotalMinutes;
+      })
+      .map((item) => ({ item, score: scoreItem(item, params.terms) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score || b.item.createdAt.localeCompare(a.item.createdAt))
+      .slice(0, params.limit)
+      .map((r) => r.item);
   }
 
   async listCollections() {

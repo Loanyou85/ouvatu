@@ -11,6 +11,10 @@ import { requireSessionUser } from "@/services/users/auth";
 export const getUserStore = cache(async (): Promise<UserDataStore> => {
   const user = await requireSessionUser();
   if (isSupabaseConfigured) {
+    // The session is validated by Supabase Auth (getUser) before we get here.
+    // Data access then goes through the service role with explicit user_id
+    // filters: it does not depend on table grants / RLS setup of the project.
+    if (env.supabaseServiceRoleKey) return new SupabaseUserStore(createSupabaseAdminClient(), user.id, true);
     return new SupabaseUserStore(await createSupabaseServerClient(), user.id);
   }
   return new LocalUserStore(user.id);
