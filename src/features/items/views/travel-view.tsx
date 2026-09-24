@@ -136,7 +136,7 @@ export function TravelView({
       ) : null}
 
       <div ref={mapRef}>
-        <PlacesMap places={places} tiles={tiles} highlight={activeDay?.stops.map((s) => s.placeIndex)} />
+        <PlacesMap places={places} itemId={itemId} tiles={tiles} highlight={activeDay?.stops.map((s) => s.placeIndex)} />
       </div>
 
       <Block title="Lieux détectés">

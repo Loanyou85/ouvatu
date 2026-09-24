@@ -141,7 +141,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
           {/* Places mentioned in any other kind of content (a look shot in a park…): map right under the card. */}
           {d.category !== "TRAVEL" && d.category !== "PLACES" && view.userData.locations?.length ? (
             <div className="mt-10 space-y-6">
-              <PlacesMap places={view.userData.locations} tiles={tiles} title="Les lieux sur la carte" />
+              <PlacesMap places={view.userData.locations} itemId={view.id} tiles={tiles} title="Les lieux sur la carte" />
               <PlaceList places={view.userData.locations} />
             </div>
           ) : null}
