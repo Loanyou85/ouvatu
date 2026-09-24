@@ -1,6 +1,7 @@
 import "server-only";
 import { env, isStripeConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { checkStripePrices } from "@/services/billing/stripe";
 
 export interface HealthCheck {
   label: string;
@@ -76,12 +77,34 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
     detail: env.appUrl.includes("localhost") ? "manquante (localhost)" : "OK",
     fix: "L'adresse de ton site, ex. https://ouvatu.vercel.app (sans / à la fin)",
   });
-  checks.push({
-    label: "Paiement Stripe",
-    status: isStripeConfigured ? "ok" : "optional",
-    detail: isStripeConfigured ? "OK" : "non configuré (paiement indisponible)",
-    fix: "STRIPE_SECRET_KEY + STRIPE_PRICE_PREMIUM_WEEKLY / MONTHLY / YEARLY",
-  });
+  const stripeVars = {
+    STRIPE_SECRET_KEY: env.stripeSecretKey,
+    STRIPE_PRICE_PREMIUM_WEEKLY: env.stripePriceWeekly,
+    STRIPE_PRICE_PREMIUM_MONTHLY: env.stripePriceMonthly,
+    STRIPE_PRICE_PREMIUM_YEARLY: env.stripePriceYearly,
+  };
+  const missingStripe = Object.entries(stripeVars).filter(([, v]) => !v).map(([k]) => k);
+  if (!isStripeConfigured) {
+    checks.push({
+      label: "Paiement Stripe",
+      status: "missing",
+      detail: `manquant : ${missingStripe.join(", ")}`,
+      fix: "Vercel → Settings → Environment Variables : ajoute ces variables puis Redeploy",
+    });
+  } else {
+    const key = env.stripeSecretKey ?? "";
+    const keyKind = /^(sk|rk)_test_/.test(key) ? "test" : /^(sk|rk)_live_/.test(key) ? "production" : null;
+    checks.push({
+      label: "STRIPE_SECRET_KEY",
+      status: keyKind ? "ok" : "error",
+      detail: keyKind ? `OK (mode ${keyKind}${key.startsWith("rk_") ? ", clé limitée rk_" : ""})` : "format inattendu (doit commencer par sk_ ou rk_)",
+      fix: keyKind ? undefined : "Stripe → Développeurs → Clés API → copie la clé secrète",
+    });
+    const labels = { week: "STRIPE_PRICE_PREMIUM_WEEKLY", month: "STRIPE_PRICE_PREMIUM_MONTHLY", year: "STRIPE_PRICE_PREMIUM_YEARLY" } as const;
+    for (const r of await checkStripePrices()) {
+      checks.push({ label: labels[r.interval], status: r.ok ? "ok" : "error", detail: r.detail, fix: r.fix });
+    }
+  }
   checks.push({
     label: "IA (AI_API_KEY)",
     status: env.aiApiKey ? "ok" : "optional",

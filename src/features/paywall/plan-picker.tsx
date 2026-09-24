@@ -20,13 +20,17 @@ export function PlanPicker() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ interval }),
     }).catch(() => null);
-    const data = (await res?.json().catch(() => null)) as { url?: string } | null;
+    const data = (await res?.json().catch(() => null)) as { url?: string; reason?: string; fix?: string } | null;
     if (data?.url) {
       window.location.assign(data.url);
       return;
     }
     setLoading(false);
-    setError("Le paiement est momentanément indisponible. Réessaie dans quelques instants.");
+    setError(
+      data?.reason
+        ? `Le paiement est momentanément indisponible. ${data.reason}${data.fix ? ` ➡️ ${data.fix}` : ""}`
+        : "Le paiement est momentanément indisponible. Réessaie dans quelques instants.",
+    );
   }
 
   return (
