@@ -2,13 +2,29 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getUserStore } from "@/db";
+import { env, isSupabaseConfigured } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { requireSessionUser } from "@/services/users/auth";
+
+/**
+ * Accounts created before the database migration (or before the sign-up
+ * trigger existed) have no row in public.users: create it on the fly.
+ */
+async function ensureProfile(id: string, email: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !env.supabaseServiceRoleKey) return false;
+  const { error } = await createSupabaseAdminClient()
+    .from("users")
+    .upsert({ id, email }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) console.error("[auth] could not create missing profile", error.message);
+  return !error;
+}
 
 /** Everything an authenticated page needs, resolved once per request. */
 export const getAppContext = cache(async () => {
   const user = await requireSessionUser();
   const store = await getUserStore();
-  const profile = await store.getProfile();
+  let profile = await store.getProfile();
+  if (!profile && (await ensureProfile(user.id, user.email))) profile = await store.getProfile();
   if (!profile) redirect("/logout");
   return { user, store, profile, plan: profile.plan };
 });

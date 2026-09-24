@@ -18,6 +18,14 @@ export interface SessionUser {
   email: string;
 }
 
+const NOT_CONNECTED =
+  "Le site n'est pas encore relié à la base de données : ajoute SUPABASE_URL et SUPABASE_ANON_KEY sur Vercel, puis redéploie.";
+
+/** Local JSON auth is a development tool: never silently use it in production. */
+function localAuthUnavailable(): boolean {
+  return env.isProduction && !env.sessionSecret;
+}
+
 export type AuthResult = { ok: true; needsEmailConfirmation?: boolean } | { ok: false; error: string };
 
 /** Current authenticated user, validated server-side. Cached per request. */
@@ -27,6 +35,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     const { data } = await supabase.auth.getUser();
     return data.user ? { id: data.user.id, email: data.user.email ?? "" } : null;
   }
+  if (localAuthUnavailable()) return null;
   const cookieStore = await cookies();
   const userId = readSessionToken(cookieStore.get(LOCAL_SESSION_COOKIE)?.value);
   if (!userId) return null;
@@ -88,6 +97,7 @@ export async function signUp(
     if (error) return { ok: false, error: translateAuthError(error.message) };
     return { ok: true, needsEmailConfirmation: !data.session, userId: data.user?.id };
   }
+  if (localAuthUnavailable()) return { ok: false, error: NOT_CONNECTED };
   const result = localSignUp(email, password, name);
   if ("error" in result) return { ok: false, error: result.error };
   await setLocalSession(result.userId);
@@ -119,6 +129,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     if (error) return { ok: false, error: translateAuthError(error.message) };
     return { ok: true };
   }
+  if (localAuthUnavailable()) return { ok: false, error: NOT_CONNECTED };
   const result = localSignIn(email, password);
   if ("error" in result) return { ok: false, error: result.error };
   await setLocalSession(result.userId);
