@@ -37,7 +37,7 @@ export default async function PremiumPage(props: PageProps<"/premium">) {
   }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2 md:items-start md:pt-6">
+    <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 md:items-start md:gap-10 md:pt-6">
       <div className="animate-fade-up">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-strong">
           <Sparkles className="h-3.5 w-3.5" /> NOMA Premium
@@ -45,7 +45,12 @@ export default async function PremiumPage(props: PageProps<"/premium">) {
         <h1 className="mt-4 text-[2.2rem] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-5xl">Débloque ton espace.</h1>
         <p className="mt-3 text-lg text-muted">Tout ce que NOMA détecte, sans limite.</p>
         {sp.canceled ? <p className="mt-4 rounded-2xl bg-hover px-4 py-3 text-sm">Paiement annulé. Tu peux réessayer quand tu veux.</p> : null}
-        <ul className="mt-8 space-y-4">
+      </div>
+      <div className="rounded-[1.75rem] bg-card p-5 shadow-float sm:p-6 animate-fade-up [animation-delay:100ms] md:col-start-2 md:row-start-1 md:row-span-3">
+        <PlanPicker />
+      </div>
+      <div className="animate-fade-up md:col-start-1">
+        <ul className="space-y-4">
           {FEATURES.map((f) => (
             <li key={f.title} className="flex gap-3">
               <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-success text-white">
@@ -58,9 +63,6 @@ export default async function PremiumPage(props: PageProps<"/premium">) {
             </li>
           ))}
         </ul>
-      </div>
-      <div className="rounded-[1.75rem] bg-card p-5 shadow-float sm:p-6 animate-fade-up [animation-delay:100ms]">
-        <PlanPicker />
       </div>
     </div>
   );

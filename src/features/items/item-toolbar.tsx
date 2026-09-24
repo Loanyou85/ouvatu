@@ -179,10 +179,10 @@ export function ItemToolbar({
 export function SaveBar({ itemId }: { itemId: string }) {
   const { pending, run } = useServerAction();
   return (
-    <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line/70 bg-card/95 p-3 backdrop-blur-xl pb-safe md:bottom-0 animate-fade-up">
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-1 sm:px-6">
-        <p className="hidden text-sm font-semibold text-muted sm:block">Cette fiche n&apos;est pas encore dans ton espace.</p>
-        <Button variant="accent" size="lg" className="w-full sm:w-auto" loading={pending} onClick={() => run(() => saveItemAction(itemId))}>
+    <div className="fixed inset-x-3 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 animate-fade-up md:inset-x-auto md:bottom-8 md:right-8">
+      <div className="flex items-center gap-3 rounded-[1.4rem] bg-ink p-2 shadow-float sm:pl-4">
+        <p className="hidden flex-1 text-sm font-semibold text-white/80 sm:block">Pas encore dans ton espace</p>
+        <Button variant="accent" className="w-full sm:w-auto" loading={pending} onClick={() => run(() => saveItemAction(itemId))}>
           Enregistrer dans mon espace
         </Button>
       </div>

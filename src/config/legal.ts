@@ -108,7 +108,7 @@ export const LEGAL_PAGES: Record<string, LegalPage> = {
         body: [
           "Uniquement des cookies strictement nécessaires : maintien de ta session de connexion. Ils sont exemptés de consentement (article 82 de la loi Informatique et Libertés).",
           "Nous n'utilisons aucun cookie publicitaire ni traceur tiers. La mesure d'usage est réalisée côté serveur, sans cookie.",
-          "Le bandeau d'information enregistre ton choix dans le stockage local de ton navigateur.",
+          "Aucun bandeau de consentement n'est donc nécessaire. Si des traceurs non essentiels étaient ajoutés un jour, ton consentement préalable serait demandé.",
         ],
       },
     ],

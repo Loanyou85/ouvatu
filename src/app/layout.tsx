@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
-import { CookieNotice } from "@/components/layout/cookie-notice";
 import { BRAND } from "@/config/brand";
 import "./globals.css";
 
@@ -31,7 +30,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="fr" className={manrope.variable}>
       <body className="flex min-h-dvh flex-col">
         {children}
-        <CookieNotice />
       </body>
     </html>
   );

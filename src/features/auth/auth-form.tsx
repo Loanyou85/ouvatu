@@ -65,6 +65,14 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
       <Button type="submit" variant="dark" size="lg" className="w-full" loading={pending}>
         {mode === "login" ? "Se connecter" : "Créer mon compte"}
       </Button>
+      {mode === "signup" ? (
+        <p className="text-center text-xs text-subtle">
+          Uniquement des cookies nécessaires à ta connexion, aucun traceur publicitaire.{" "}
+          <Link href="/legal/cookies" className="underline underline-offset-2">
+            En savoir plus
+          </Link>
+        </p>
+      ) : null}
     </form>
   );
 }

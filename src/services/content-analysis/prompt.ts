@@ -53,5 +53,7 @@ export function buildUserPrompt(content: NormalizedContent): string {
   if (ld) data.push(`Données structurées schema.org (JSON-LD) :\n${ld}`);
   if (content.text) data.push(`Texte de la page :\n${content.text.slice(0, 12000)}`);
 
-  return `${parts.join("\n")}\n\n<untrusted_content>\n${data.join("\n\n")}\n</untrusted_content>\n\nAnalyse ce contenu et renvoie la fiche structurée.`;
+  // External text must not be able to close the untrusted block.
+  const body = data.join("\n\n").replace(/<\/?\s*untrusted_content\s*>/gi, "[balise supprimée]");
+  return `${parts.join("\n")}\n\n<untrusted_content>\n${body}\n</untrusted_content>\n\nAnalyse ce contenu et renvoie la fiche structurée.`;
 }

@@ -36,7 +36,7 @@ export function ItemCard({ item, index = 0, variant = "grid" }: { item: ContentI
           src={item.imageUrl}
           category={item.category}
           alt=""
-          className="aspect-[4/5] w-full transition-transform duration-500 group-hover:scale-[1.03]"
+          className="aspect-square w-full transition-transform duration-500 group-hover:scale-[1.03]"
           emojiClassName="text-5xl"
         />
         <div className="absolute inset-x-2 top-2 flex items-start justify-between">

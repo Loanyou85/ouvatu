@@ -37,7 +37,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   const canItinerary = hasFeature(plan, "itinerary") || item.isExample;
 
   return (
-    <div className={view.isSaved ? "" : "pb-24"}>
+    <div className={view.isSaved ? "" : "pb-28"}>
       <Link href="/library" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
         <ArrowLeft className="h-4 w-4" /> Bibliothèque
       </Link>
@@ -59,7 +59,13 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12">
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <ItemImage src={view.imageUrl} category={view.category} alt="" className="aspect-[4/3] w-full rounded-[1.75rem] shadow-card lg:aspect-[4/5]" emojiClassName="text-7xl" />
+          <ItemImage
+            src={view.imageUrl}
+            category={view.category}
+            alt=""
+            className={view.imageUrl ? "aspect-[4/3] w-full rounded-[1.75rem] shadow-card lg:aspect-[4/5]" : "aspect-[16/7] w-full rounded-[1.75rem] lg:aspect-square"}
+            emojiClassName="text-6xl lg:text-7xl"
+          />
         </div>
 
         <div className="min-w-0">

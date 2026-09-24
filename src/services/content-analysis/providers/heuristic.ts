@@ -213,9 +213,11 @@ export class HeuristicProvider implements AnalysisProvider {
 
   async analyze(content: NormalizedContent): Promise<AiEnvelope> {
     const corpus = contentCorpus(content);
-    const baseTitle = stripEmoji(content.title ?? content.siteName ?? "Inspiration").replace(/#[\p{L}\p{N}_]+/gu, "").trim() || "Inspiration";
+    const firstLine = (text: string | null) => (text ? stripEmoji(text.split("\n")[0].replace(/#[\p{L}\p{N}_]+/gu, "")).trim() : "");
+    const baseTitle = firstLine(content.title) || firstLine(content.userText) || firstLine(content.siteName) || "Inspiration";
     const title = truncate(baseTitle, 70);
-    const summary = truncate(stripEmoji(content.description ?? content.userText ?? content.title ?? "Contenu enregistré depuis le web."), 300);
+    const summarySource = content.description ?? content.userText ?? content.title ?? "Contenu enregistré depuis le web.";
+    const summary = truncate(firstLine(summarySource) || stripEmoji(summarySource), 300);
     const tags = content.hashtags.slice(0, 6);
 
     // 1. schema.org JSON-LD gives reliable, publisher-provided structure.
@@ -342,7 +344,7 @@ export class HeuristicProvider implements AnalysisProvider {
         }));
         if (category === "TRAVEL") {
           env.travel = { destination: where?.city ?? null, country: where?.country ?? null, cities: where ? [where.city] : [], durationDays: null, bestPeriod: null, budgetText: null, places };
-          if (where) env.title = truncate(`${where.city} — ${title}`, 70);
+          if (where && !normalizeText(title).includes(normalizeText(where.city))) env.title = truncate(`${where.city} — ${title}`, 70);
         } else if (places.length) {
           env.places = { city: where?.city ?? null, country: where?.country ?? null, places };
         } else {
