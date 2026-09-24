@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { env, isSupabaseConfigured } from "@/lib/env";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   LOCAL_SESSION_COOKIE,
   createSessionToken,
@@ -55,8 +55,10 @@ async function setLocalSession(userId: string) {
 }
 
 /**
- * @param confirmUrl absolute URL the confirmation email links back to (built from the
- *   domain the visitor is actually on, so it never points to localhost in production).
+ * Sign-up WITHOUT email confirmation: the account is created already confirmed
+ * (Supabase admin API) and the user is signed in immediately. No email is sent.
+ * Falls back to the regular sign-up flow only if the service role key is missing.
+ * @param confirmUrl used by the fallback flow only (confirmation link target).
  */
 export async function signUp(
   email: string,
@@ -65,6 +67,18 @@ export async function signUp(
   confirmUrl?: string,
 ): Promise<AuthResult & { userId?: string }> {
   if (isSupabaseConfigured) {
+    if (env.supabaseServiceRoleKey) {
+      const { data, error } = await createSupabaseAdminClient().auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { name },
+      });
+      if (error) return { ok: false, error: translateAuthError(error.message) };
+      const signedIn = await signIn(email, password);
+      if (!signedIn.ok) return signedIn;
+      return { ok: true, userId: data.user?.id };
+    }
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -80,10 +94,28 @@ export async function signUp(
   return { ok: true, userId: result.userId };
 }
 
+/**
+ * Accounts created while email confirmation was still enabled may be stuck as
+ * "unconfirmed". Supabase only reports that after checking the password, so we
+ * confirm the account (admin API) and retry once.
+ */
+async function confirmPendingAccount(email: string): Promise<boolean> {
+  if (!env.supabaseServiceRoleKey) return false;
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin.from("users").select("id").eq("email", email.trim().toLowerCase()).maybeSingle();
+  const id = (data as { id?: string } | null)?.id;
+  if (!id) return false;
+  const { error } = await admin.auth.admin.updateUserById(id, { email_confirm: true });
+  return !error;
+}
+
 export async function signIn(email: string, password: string): Promise<AuthResult> {
   if (isSupabaseConfigured) {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    let { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error && error.message.toLowerCase().includes("email not confirmed") && (await confirmPendingAccount(email))) {
+      ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+    }
     if (error) return { ok: false, error: translateAuthError(error.message) };
     return { ok: true };
   }
@@ -106,7 +138,7 @@ export async function signOut(): Promise<void> {
 function translateAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("invalid login")) return "Email ou mot de passe incorrect.";
-  if (m.includes("already registered") || m.includes("already exists")) return "Un compte existe déjà avec cet email.";
+  if (m.includes("already registered") || m.includes("already been registered") || m.includes("already exists")) return "Un compte existe déjà avec cet email.";
   if (m.includes("email not confirmed")) return "Confirme ton email avant de te connecter.";
   if (m.includes("password")) return "Ce mot de passe n'est pas assez solide (8 caractères minimum).";
   if (m.includes("rate limit")) return "Trop de tentatives. Réessaie dans quelques minutes.";

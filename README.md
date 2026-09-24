@@ -58,7 +58,9 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 3. Auth → Providers → Email : activé. Auth → URL Configuration :
    - **Site URL** : `https://<ton-domaine>` (pas `localhost`, sinon les emails pointent vers localhost) ;
    - **Redirect URLs** : `https://<ton-domaine>/**` (et `http://localhost:3000/**` pour le développement).
-   Le lien de confirmation ramène automatiquement dans l'app (`/auth/callback?next=…`).
+   Aucune confirmation par email : avec `SUPABASE_SERVICE_ROLE_KEY`, les comptes sont créés déjà confirmés
+   (API admin) et connectés immédiatement. Tu peux aussi désactiver « Confirm email » dans
+   Authentication → Providers → Email. Sans la clé service role, l'app retombe sur le flux Supabase standard.
 4. Applique la migration (section suivante).
 
 ## 4. Migrations
