@@ -4,14 +4,19 @@ import "server-only";
  * Server-side environment access. Secrets are only read here and never
  * shipped to the client (this module is `server-only`).
  */
-function read(name: string): string | undefined {
-  const value = process.env[name];
-  return value && value.trim().length > 0 ? value.trim() : undefined;
+/** First non-empty value among the given names (private name first, public fallback). */
+function read(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value && value.trim().length > 0) return value.trim();
+  }
+  return undefined;
 }
 
 export const env = {
-  supabaseUrl: read("NEXT_PUBLIC_SUPABASE_URL"),
-  supabaseAnonKey: read("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+  // Only used server-side: the private names (SUPABASE_URL…) are preferred, NEXT_PUBLIC_ kept for compatibility.
+  supabaseUrl: read("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"),
+  supabaseAnonKey: read("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
 
   stripeSecretKey: read("STRIPE_SECRET_KEY"),
@@ -32,7 +37,7 @@ export const env = {
   metaOembedToken: read("META_OEMBED_TOKEN"),
   youtubeApiKey: read("YOUTUBE_API_KEY"),
 
-  appUrl: read("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
+  appUrl: read("APP_URL", "NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
   sessionSecret: read("SESSION_SECRET"),
   adminEmails: (read("ADMIN_EMAILS") ?? "")
     .split(",")

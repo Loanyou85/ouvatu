@@ -40,16 +40,16 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 
 | Variable | Rôle |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Active Supabase (DB + Auth) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Active Supabase (DB + Auth). Utilisées uniquement côté serveur : peuvent être « Sensitive » sur Vercel (les anciens noms `NEXT_PUBLIC_…` restent acceptés) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Webhook Stripe, analytics, admin, suppression de compte |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Paiement |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Paiement (une clé restreinte `rk_` convient si elle a les permissions Checkout, Customers, Subscriptions, Customer portal en écriture, Prices/Products/Invoices en lecture) |
 | `STRIPE_PRICE_PREMIUM_WEEKLY`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY` | IDs des prix Stripe récurrents |
 | `AI_API_KEY`, `AI_MODEL`, `AI_PROVIDER` | Analyse IA (Anthropic, modèle par défaut `claude-opus-5`) |
 | `MAPS_PROVIDER`, `MAPS_API_KEY`, `MAPS_CONTACT_EMAIL` | Géocodage (`osm` / `google` / `none`) |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` | Tuiles de carte (OSM par défaut) |
 | `TMDB_API_KEY`, `YOUTUBE_API_KEY`, `META_OEMBED_TOKEN` | Enrichissements optionnels |
 | `ADMIN_EMAILS` | Emails autorisés sur `/admin` |
-| `NEXT_PUBLIC_APP_URL` | URL publique (redirections Stripe / Auth) |
+| `APP_URL` | URL publique du site (redirections Stripe / Auth) |
 
 ## 3. Supabase
 
@@ -118,7 +118,7 @@ npm run build && npm start
 ## 8. Déploiement (Vercel + Supabase)
 
 1. Importer le dépôt dans Vercel, renseigner les variables d'environnement (Production + Preview).
-2. `NEXT_PUBLIC_APP_URL` = domaine final ; mettre à jour les URLs de redirection Supabase et le webhook Stripe.
+2. `APP_URL` = domaine final ; mettre à jour les URLs de redirection Supabase et le webhook Stripe.
 3. Appliquer la migration sur le projet Supabase de production.
 4. L'analyse tourne après la réponse HTTP via `after()` (`maxDuration = 120` sur `/api/analyze`) :
    vérifier que le plan Vercel autorise cette durée.
