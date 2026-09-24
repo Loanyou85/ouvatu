@@ -13,7 +13,9 @@ export default async function SetupPage(props: PageProps<"/setup">) {
   const checks = await runHealthChecks();
   const { reason } = await props.searchParams;
   const profileError = typeof reason === "string" ? reason : null;
-  const permission = profileError?.toLowerCase().includes("permission denied");
+  const lowered = profileError?.toLowerCase() ?? "";
+  const permission = lowered.includes("permission denied");
+  const missingTables = lowered.includes("schema cache") || lowered.includes("could not find the table") || lowered.includes("does not exist");
   const blocking = checks.filter((c) => c.status === "missing" || c.status === "error");
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
@@ -32,9 +34,11 @@ export default async function SetupPage(props: PageProps<"/setup">) {
           <p className="mt-1 text-sm">Raison : {profileError}</p>
           <p className="mt-2 text-sm">
             ➡️{" "}
-            {permission
-              ? "Supabase → SQL Editor : exécute le fichier supabase/migrations/20260924140000_grants.sql, puis recharge le site."
-              : "Envoie cette raison au support technique."}
+            {missingTables
+              ? "Les tables ne sont pas installées. Supabase → SQL Editor → New query : colle TOUT le fichier supabase/setup.sql → Run, puis recharge le site."
+              : permission
+                ? "Supabase → SQL Editor : exécute le fichier supabase/migrations/20260924140000_grants.sql, puis recharge le site."
+                : "Envoie cette raison au support technique."}
           </p>
         </div>
       ) : null}

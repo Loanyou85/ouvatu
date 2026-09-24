@@ -65,7 +65,7 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 
 ## 4. Migrations
 
-Le schéma est dans `supabase/migrations/` (à exécuter dans l'ordre : `…init.sql`, `…weekly_plan.sql`, `…grants.sql`) :
+Installation en une fois : colle tout `supabase/setup.sql` dans le SQL Editor puis **Run** (il regroupe les migrations de `supabase/migrations/`, dans l'ordre) :
 
 - tables : `users`, `subscriptions`, `sources`, `content_items`, `entities`, `collections`, `collection_items`,
   `recipes`, `recipe_ingredients`, `recipe_steps`, `trips`, `trip_locations`, `places`, `products`, `movies`,

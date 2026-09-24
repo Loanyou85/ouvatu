@@ -11,7 +11,7 @@ export interface HealthCheck {
 
 function describeDbError(message: string, code?: string): string {
   const m = message.toLowerCase();
-  if (code === "42P01" || code === "PGRST205" || m.includes("does not exist") || m.includes("could not find the table")) {
+  if (code === "42P01" || code === "PGRST205" || m.includes("does not exist") || m.includes("could not find the table") || m.includes("schema cache")) {
     return "table absente";
   }
   if (m.includes("invalid api key") || m.includes("jwt") || m.includes("unauthorized") || m.includes("invalid key")) return "clé Supabase refusée";
@@ -47,7 +47,8 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
     try {
       const admin = createSupabaseAdminClient();
       for (const table of ["users", "content_items", "subscriptions", "collections"]) {
-        const { error } = await admin.from(table).select("*", { count: "exact", head: true });
+        // Real GET (not HEAD): HEAD responses carry no error body, which hid missing tables.
+        const { error } = await admin.from(table).select("*").limit(1);
         checks.push({
           label: `Table « ${table} »`,
           status: error ? "error" : "ok",
@@ -55,7 +56,7 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
           fix: !error
             ? undefined
             : describeDbError(error.message, error.code) === "table absente"
-              ? "Supabase → SQL Editor : exécute supabase/migrations/20260924000000_init.sql puis 20260924120000_weekly_plan.sql"
+              ? "Supabase → SQL Editor → New query : colle tout le fichier supabase/setup.sql → Run"
               : "Vérifie SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY (même projet Supabase, sans espace)",
         });
       }
