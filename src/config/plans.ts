@@ -56,6 +56,8 @@ export const PREMIUM_OFFERS: Record<BillingInterval, PriceOffer> = {
     currency: "EUR",
     stripePriceEnv: "STRIPE_PRICE_PREMIUM_MONTHLY",
     unit: "mois",
+    /** vs. the weekly offer: 9,99 € instead of ~21,62 € (4,99 € × 52 / 12). */
+    highlight: "−50 %",
   },
   year: {
     interval: "year",
