@@ -33,7 +33,7 @@ function similar(a: string, b: string): boolean {
   return na === nb || na.includes(nb) || nb.includes(na);
 }
 
-async function geocodePlaces(places: Place[], fallbackCity: string | null, fallbackCountry: string | null): Promise<void> {
+export async function geocodePlaces(places: Place[], fallbackCity: string | null, fallbackCountry: string | null): Promise<void> {
   const provider = getMapsProvider();
   if (!provider) return;
   let last = 0;

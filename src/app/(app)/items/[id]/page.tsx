@@ -110,6 +110,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
             {d.category === "TRAVEL" ? (
               <TravelView
                 tiles={tiles}
+                defaultCity={d.travel.destination ?? d.travel.cities[0] ?? null}
                 itemId={view.id}
                 places={d.travel.places}
                 lockedCount={view.lockedCount}
@@ -124,7 +125,7 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
               />
             ) : null}
             {d.category === "PLACES" ? (
-              <TravelView tiles={tiles} itemId={view.id} places={d.places.places} lockedCount={view.lockedCount} itinerary={view.userData.itinerary ?? null} canItinerary={canItinerary} />
+              <TravelView tiles={tiles} defaultCity={d.places.city} itemId={view.id} places={d.places.places} lockedCount={view.lockedCount} itinerary={view.userData.itinerary ?? null} canItinerary={canItinerary} />
             ) : null}
             {d.category === "PRODUCTS" ? <ProductsView itemId={view.id} data={d.products} lockedCount={view.lockedCount} entries={entries} sourceUrl={view.isExample ? null : view.sourceUrl} /> : null}
             {d.category === "MOVIES" || d.category === "SERIES" ? <ScreenView itemId={view.id} data={d.screen} lockedCount={view.lockedCount} entries={entries} /> : null}

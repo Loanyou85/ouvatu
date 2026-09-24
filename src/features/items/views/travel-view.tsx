@@ -12,6 +12,7 @@ import type { Place } from "@/types/schemas";
 import { generateItineraryAction } from "../actions";
 import { useServerAction } from "../use-action";
 import type { MapTiles } from "./map-view";
+import { AddPlaces } from "./add-places";
 import { PlaceList } from "./place-list";
 import { Block, Fact, LockedPreview } from "./shared";
 
@@ -28,8 +29,10 @@ export function TravelView({
   canItinerary,
   facts,
   tiles,
+  defaultCity = null,
 }: {
   tiles?: MapTiles;
+  defaultCity?: string | null;
   itemId: string;
   places: Place[];
   lockedCount: number;
@@ -44,6 +47,21 @@ export function TravelView({
   const located = places.filter((p) => p.geo).length;
   const activeDay = itinerary?.days[day];
   const dayRoute = activeDay ? googleDirectionsUrl(activeDay.stops.map((s) => places[s.placeIndex]).filter(Boolean)) : null;
+
+  if (places.length === 0) {
+    return (
+      <div className="space-y-8">
+        {facts?.some((f) => f.value) ? (
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {facts.map((f) => (
+              <Fact key={f.label} label={f.label} value={f.value} />
+            ))}
+          </div>
+        ) : null}
+        <AddPlaces itemId={itemId} defaultCity={defaultCity} empty />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -132,6 +150,9 @@ export function TravelView({
       <Block title="Lieux détectés">
         <PlaceList places={places} />
         <LockedPreview count={lockedCount} noun="lieu" plural="lieux" />
+        <div className="mt-4">
+          <AddPlaces itemId={itemId} defaultCity={defaultCity} empty={false} />
+        </div>
       </Block>
     </div>
   );

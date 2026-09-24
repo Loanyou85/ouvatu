@@ -321,6 +321,8 @@ export class SupabaseUserStore implements UserDataStore {
     if (patch.isSaved !== undefined) row.is_saved = patch.isSaved;
     if (patch.isFavorite !== undefined) row.is_favorite = patch.isFavorite;
     if (patch.userData !== undefined) row.user_data = patch.userData;
+    if (patch.data !== undefined) row.data = patch.data;
+    if (patch.entities !== undefined) row.entities = patch.entities;
     check(await this.sb.from("content_items").update(row).eq("id", id).eq("user_id", this.userId));
   }
 

@@ -9,7 +9,10 @@ import { isUuid } from "@/lib/utils";
 import { track } from "@/services/analytics";
 import { hasFeature } from "@/services/billing/entitlements";
 import { mergeShoppingLines, scaleIngredients } from "@/services/recipes";
+import { geocodePlaces } from "@/services/enrichment";
+import { deriveEntities } from "@/services/entity-extraction";
 import { buildItinerary, suggestDayCount } from "@/services/travel/itinerary";
+import type { Place, PlaceKind } from "@/types/schemas";
 import type { SavedListType } from "@/types/domain";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string; code?: "limit" | "premium" | "not_found" };
@@ -193,6 +196,68 @@ export async function generateItineraryAction(itemId: string, days: number): Pro
   await store.updateItem(itemId, { userData: { ...item.userData, itinerary }, ...(item.isSaved ? {} : { isSaved: true }) });
   revalidatePath(`/items/${itemId}`);
   return { ok: true, message: "Itinéraire créé" };
+}
+
+const KIND_HINTS: [RegExp, PlaceKind][] = [
+  [/\b(restaurant|resto|trattoria|pizzeria|bistro|brasserie|taverna|sushi)\b/i, "restaurant"],
+  [/\b(caf[eé]|coffee|salon de th[eé]|bakery|boulangerie|p[aâ]tisserie)\b/i, "cafe"],
+  [/\b(bar|pub|rooftop)\b/i, "bar"],
+  [/\b(h[oô]tel|hostel|auberge|riad|airbnb)\b/i, "hotel"],
+  [/\b(plage|beach|praia|playa)\b/i, "beach"],
+  [/\b(mus[eé]e|museum|museo|galerie)\b/i, "museum"],
+  [/\b(parc|park|jardin|garden)\b/i, "park"],
+  [/\b(miradou?ro|belv[eé]d[eè]re|viewpoint|point de vue)\b/i, "viewpoint"],
+];
+
+/**
+ * Places typed by the user (when the post only shows them in the video):
+ * added to the card, then located on the map. User-provided, never guessed.
+ */
+export async function addPlacesAction(itemId: string, text: string, city: string): Promise<ActionResult> {
+  const loaded = await loadItem(itemId);
+  if (!loaded) return notFound;
+  const { item, store } = loaded;
+  const d = structuredClone(item.data);
+  if (d.category !== "TRAVEL" && d.category !== "PLACES") return { ok: false, error: "Action indisponible pour ce contenu." };
+  const places = d.category === "TRAVEL" ? d.travel.places : d.places.places;
+  const known = new Set(places.map((p) => p.name.toLowerCase()));
+  const names = [...new Set(text.split(/[\n;]+/).map((n) => n.replace(/^[\s\-•*\d.)]+/, "").trim().slice(0, 120)))]
+    .filter((n) => n.length >= 2 && !known.has(n.toLowerCase()))
+    .slice(0, Math.max(0, 60 - places.length));
+  if (names.length === 0) return { ok: false, error: "Écris au moins un nom de lieu (un par ligne)." };
+  const cleanCity = city.trim().slice(0, 120) || null;
+  const country = d.category === "TRAVEL" ? d.travel.country : d.places.country;
+  const added: Place[] = names.slice(0, 20).map((name) => ({
+    name,
+    kind: KIND_HINTS.find(([re]) => re.test(name))?.[1] ?? "sight",
+    description: null,
+    address: null,
+    city: cleanCity,
+    country,
+    priceText: null,
+    cuisine: null,
+    url: null,
+    geo: null,
+  }));
+  await geocodePlaces(added, cleanCity, country);
+  places.push(...added);
+  if (d.category === "TRAVEL" && !d.travel.destination && cleanCity) d.travel.destination = cleanCity;
+  if (d.category === "PLACES" && !d.places.city && cleanCity) d.places.city = cleanCity;
+  const located = added.filter((p) => p.geo).length;
+  await store.updateItem(itemId, {
+    data: d,
+    entities: deriveEntities(d),
+    // The previous itinerary no longer matches the list of places.
+    userData: { ...item.userData, itinerary: undefined },
+  });
+  revalidatePath(`/items/${itemId}`);
+  return {
+    ok: true,
+    message:
+      located === added.length
+        ? `${added.length} lieu${added.length > 1 ? "x" : ""} ajouté${added.length > 1 ? "s" : ""} sur la carte`
+        : `${added.length} ajouté${added.length > 1 ? "s" : ""}, ${located} localisé${located > 1 ? "s" : ""} (précise la ville pour les autres)`,
+  };
 }
 
 export async function trackPremiumClickAction(action: string): Promise<void> {
