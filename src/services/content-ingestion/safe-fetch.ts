@@ -52,6 +52,8 @@ export interface SafeResponse {
   url: string;
   status: number;
   contentType: string;
+  /** Raw body (for images). */
+  bytes: Buffer;
   body: string;
 }
 
@@ -90,8 +92,9 @@ export async function safeFetch(
           chunks.push(value);
         }
       }
-      const body = new TextDecoder("utf-8", { fatal: false }).decode(Buffer.concat(chunks));
-      return { url: url.toString(), status: res.status, contentType, body };
+      const bytes = Buffer.concat(chunks);
+      const body = contentType.startsWith("image/") ? "" : new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+      return { url: url.toString(), status: res.status, contentType, body, bytes };
     } finally {
       clearTimeout(timer);
     }

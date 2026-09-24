@@ -24,7 +24,8 @@ Règles impératives :
 5. Rédige title et summary en français, de façon concise et utile (title ≤ 70 caractères, summary ≤ 300 caractères). Le title doit décrire l'objet créé (ex. "Lisbonne — 3 jours", "Pâtes crémeuses au citron").
 6. confidence ∈ [0, 1] reflète ta certitude sur la catégorie ET la quantité d'informations réellement disponibles. Si les métadonnées sont très pauvres, reste sous 0.5.
 7. Remplis uniquement le bloc correspondant à la catégorie choisie ; tous les autres blocs sont null.
-8. tags : 3 à 8 mots-clés courts en minuscules, en français (cuisine, pays, style, ambiance…).`;
+8. tags : 3 à 8 mots-clés courts en minuscules, en français (cuisine, pays, style, ambiance…).
+9. Lieux : extrais TOUS les lieux mentionnés (légende, texte de couverture, hashtags, texte ajouté), pas seulement le premier. Les hashtags collés comptent : #biidaasigepark → « Biidaasige Park » ; #torontothingstodo ou #toronto → ville Toronto. Renseigne city et country pour chaque lieu quand la ville est mentionnée quelque part (même seulement en hashtag), pour qu'il puisse être placé sur une carte. Un contenu qui montre un ou plusieurs lieux à visiter (parc, plage, musée, restaurant…) relève de PLACES ou TRAVEL, même si on y voit aussi une tenue.`;
 
 function compactJsonLd(items: Record<string, unknown>[]): string | null {
   const useful = items.filter((i) => {
@@ -48,6 +49,7 @@ export function buildUserPrompt(content: NormalizedContent): string {
   if (content.siteName) data.push(`Site : ${content.siteName}`);
   if (content.description) data.push(`Description :\n${content.description}`);
   if (content.hashtags.length) data.push(`Hashtags : ${content.hashtags.map((h) => `#${h}`).join(" ")}`);
+  if (content.coverText) data.push(`Texte écrit sur l'image de couverture :\n${content.coverText}`);
   if (content.userText) data.push(`Texte ajouté par l'utilisateur :\n${content.userText}`);
   const ld = compactJsonLd(content.jsonLd);
   if (ld) data.push(`Données structurées schema.org (JSON-LD) :\n${ld}`);

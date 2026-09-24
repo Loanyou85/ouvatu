@@ -151,3 +151,14 @@ describe("grounding guard", () => {
     expect(grounded.structuredData.screen.titles[0].streamingPlatforms).toEqual(["Max"]);
   });
 });
+
+describe("social post context", () => {
+  it("uses hashtags and cover text as real content", async () => {
+    const { contentCorpus } = await import("@/services/content-ingestion/types");
+    const { buildUserPrompt } = await import("@/services/content-analysis/prompt");
+    const c = content({ hashtags: ["biidaasigepark", "toronto"], coverText: "3 spots à Toronto\nBiidaasige Park" });
+    expect(contentCorpus(c)).toContain("biidaasigepark");
+    expect(contentCorpus(c)).toContain("Biidaasige Park");
+    expect(buildUserPrompt(c)).toContain("Texte écrit sur l'image de couverture :\n3 spots à Toronto");
+  });
+});

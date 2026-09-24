@@ -30,13 +30,17 @@ export interface NormalizedContent {
   jsonLd: Record<string, unknown>[];
   /** Text provided by the user (caption, notes). */
   userText: string | null;
+  /** Text written on the public cover image (read by the AI), e.g. "5 spots à Toronto : …". */
+  coverText?: string | null;
   /** What we could access, used to be transparent in the UI. */
   retrieval: "rich" | "partial" | "minimal";
   raw: Record<string, unknown>;
 }
 
 export function contentCorpus(content: NormalizedContent): string {
-  return [content.title, content.description, content.text, content.userText, content.author]
+  // Hashtags count as real content: #biidaasigepark names a place, #toronto a city.
+  const hashtags = content.hashtags.length ? content.hashtags.join(" ") : null;
+  return [content.title, content.description, content.text, content.userText, content.coverText, hashtags, content.author]
     .filter(Boolean)
     .join("\n");
 }

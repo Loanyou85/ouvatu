@@ -4,11 +4,12 @@ import type { UserDataStore } from "@/db/types";
 import { env } from "@/lib/env";
 import { track } from "@/services/analytics";
 import { getPlan, startOfMonthIso } from "@/services/billing/entitlements";
-import { createAnthropicProvider } from "@/services/content-analysis/providers/anthropic";
+import { createAnthropicProvider, readCoverText } from "@/services/content-analysis/providers/anthropic";
 import { HeuristicProvider } from "@/services/content-analysis/providers/heuristic";
 import { AnalysisError, type AnalysisProvider } from "@/services/content-analysis/providers/types";
 import { envelopeToResult } from "@/services/content-analysis/normalize";
 import { IngestionError, ingestUrl } from "@/services/content-ingestion/ingest";
+import { safeFetch } from "@/services/content-ingestion/safe-fetch";
 import { contentCorpus, type ContentInput, type NormalizedContent } from "@/services/content-ingestion/types";
 import { detectPlatform, normalizeInputUrl } from "@/services/content-ingestion/url";
 import { enrichResult } from "@/services/enrichment";
@@ -92,6 +93,18 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
       analysisStatus: "analyzing",
       analysisStep: 1,
     });
+
+    // Social posts: the cover image often lists the places / products shown in the video.
+    if (content.thumbnailUrl && content.platform !== "web" && env.aiApiKey && env.aiProvider !== "heuristic") {
+      const cover = await safeFetch(content.thumbnailUrl, { timeoutMs: 8000, maxBytes: 4_500_000, accept: "image/*" }).catch(() => null);
+      if (cover && cover.status < 400) {
+        content.coverText = await readCoverText(cover.bytes, cover.contentType);
+        if (content.coverText) {
+          content.raw.coverText = content.coverText;
+          if (content.retrieval === "minimal") content.retrieval = "partial";
+        }
+      }
+    }
 
     let provider = getAnalysisProvider();
     let aiError: string | null = null;
