@@ -7,11 +7,20 @@ import { LogoMark } from "@/components/ui/logo";
 import { BRAND } from "@/config/brand";
 import { ONBOARDING_INTERESTS } from "@/config/categories";
 import { cn } from "@/lib/utils";
+import { AddFlow } from "@/features/add/add-flow";
 import { completeOnboarding } from "./actions";
 
-export function OnboardingFlow({ name }: { name: string | null }) {
-  const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState<string[]>([]);
+export function OnboardingFlow({
+  name,
+  initialStep = 0,
+  initialInterests = [],
+}: {
+  name: string | null;
+  initialStep?: number;
+  initialInterests?: string[];
+}) {
+  const [step, setStep] = useState(initialStep);
+  const [selected, setSelected] = useState<string[]>(initialInterests);
   const [pending, startTransition] = useTransition();
 
   const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -72,33 +81,39 @@ export function OnboardingFlow({ name }: { name: string | null }) {
         ) : null}
 
         {step === 2 ? (
-          <div className="flex flex-1 flex-col justify-center text-center">
-            <div className="mx-auto grid w-full max-w-[260px] gap-2.5 text-left">
-              {["Copie un lien", "Colle-le dans OUVATU", "Profite de ta fiche"].map((label, i) => (
-                <div key={label} className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card animate-fade-up" style={{ animationDelay: `${i * 120}ms` }}>
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-soft text-sm font-extrabold text-accent-strong">{i + 1}</span>
-                  <span className="font-semibold">{label}</span>
-                </div>
-              ))}
+          <div className="flex flex-1 flex-col pt-10">
+            <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight">Colle ton premier lien.</h1>
+            <p className="mt-2 text-muted">Une vidéo TikTok, un post Instagram, une épingle, une page web… On en fait une fiche utile.</p>
+            <div className="mt-7 rounded-[1.75rem] bg-card p-5 shadow-card">
+              <AddFlow
+                onBeforeSubmit={async () => {
+                  await fetch("/api/onboarding", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ interests: selected }),
+                  });
+                }}
+              />
             </div>
-            <h1 className="mt-10 text-[2rem] font-extrabold leading-tight tracking-tight">Prêt à transformer tes découvertes ?</h1>
           </div>
         ) : null}
       </div>
 
-      <Button
-        variant={step === 2 ? "accent" : "dark"}
-        size="lg"
-        className="w-full"
-        loading={pending}
-        onClick={() => {
-          if (step < 2) setStep(step + 1);
-          else startTransition(() => completeOnboarding(selected));
-        }}
-      >
-        {step === 0 ? "C'est parti" : step === 1 ? (selected.length ? "Continuer" : "Passer") : "Commencer"}
-        <ArrowRight className="h-5 w-5" />
-      </Button>
+      {step < 2 ? (
+        <Button variant="dark" size="lg" className="w-full" onClick={() => setStep(step + 1)}>
+          {step === 0 ? "C'est parti" : selected.length ? "Continuer" : "Passer"}
+          <ArrowRight className="h-5 w-5" />
+        </Button>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => startTransition(() => completeOnboarding(selected))}
+          className="mx-auto py-2 text-sm font-semibold text-muted hover:text-ink disabled:opacity-50"
+        >
+          Je n&apos;ai pas de lien sous la main
+        </button>
+      )}
     </div>
   );
 }

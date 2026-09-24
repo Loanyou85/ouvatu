@@ -7,7 +7,7 @@ import { FormError } from "@/components/ui/input";
 import { OFFER_ORDER, PREMIUM_OFFERS, formatPrice, type BillingInterval } from "@/config/plans";
 import { cn } from "@/lib/utils";
 
-export function PlanPicker() {
+export function PlanPicker({ next = null }: { next?: string | null }) {
   const [interval, setInterval] = useState<BillingInterval>("year");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export function PlanPicker() {
     const res = await fetch("/api/billing/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ interval }),
+      body: JSON.stringify({ interval, ...(next ? { next } : {}) }),
     }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { url?: string; reason?: string; fix?: string } | null;
     if (data?.url) {

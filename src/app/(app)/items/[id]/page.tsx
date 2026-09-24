@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryBadge } from "@/components/ui/badge";
 import { ItemImage } from "@/components/ui/item-image";
-import { requireSubscribedContext } from "@/features/auth/context";
+import { requireOnboardedContext } from "@/features/auth/context";
+import { LockedPreview } from "@/features/items/locked-preview";
 import { ItemToolbar, SaveBar } from "@/features/items/item-toolbar";
 import { BooksView, DecorView, FashionView, FitnessView, OtherView, ProductsView, ScreenView } from "@/features/items/views/collection-views";
 import type { EntryState } from "@/features/items/views/list-toggle";
@@ -22,9 +23,11 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   const { id } = await props.params;
   const searchParams = await props.searchParams;
   if (!isUuid(id)) notFound();
-  const { store, plan } = await requireSubscribedContext();
+  const { store, plan } = await requireOnboardedContext();
   const item = await store.getItem(id);
   if (!item) notFound();
+  // No subscription: the card generated during onboarding is shown blurred, the rest leads to the offers.
+  if (plan !== "PREMIUM") return <LockedPreview item={item} />;
 
   const view = toItemView(item, plan);
   const [collections, saved] = await Promise.all([store.listCollections(), store.listSaved()]);

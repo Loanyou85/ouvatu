@@ -8,11 +8,16 @@ import { track } from "@/services/analytics";
 
 const ids = ONBOARDING_INTERESTS.map((i) => i.id) as [string, ...string[]];
 
-export async function completeOnboarding(interests: string[]): Promise<void> {
-  const { store, user } = await getAppContext();
+async function saveOnboarding(interests: string[]): Promise<void> {
+  const { store, user, profile } = await getAppContext();
   const parsed = z.array(z.enum(ids)).max(ids.length).safeParse(interests);
   const clean = parsed.success ? parsed.data : [];
   await store.updateProfile({ onboardingCompleted: true, interests: clean });
-  await track(user.id, "onboarding_completed", { interests: clean });
+  if (!profile.onboardingCompleted) await track(user.id, "onboarding_completed", { interests: clean });
+}
+
+/** "Plus tard": finish onboarding without a link (goes to the offers). */
+export async function completeOnboarding(interests: string[]): Promise<void> {
+  await saveOnboarding(interests);
   redirect("/");
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { BillingInterval } from "@/config/plans";
 
-export function DemoCheckoutButton({ interval, label }: { interval: BillingInterval; label: string }) {
+export function DemoCheckoutButton({ interval, label, next = null }: { interval: BillingInterval; label: string; next?: string | null }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   return (
@@ -17,7 +17,7 @@ export function DemoCheckoutButton({ interval, label }: { interval: BillingInter
       onClick={async () => {
         setLoading(true);
         const res = await fetch("/api/billing/mock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "subscribe", interval }) });
-        if (res.ok) router.push("/premium/success");
+        if (res.ok) router.push(`/premium/success${next ? `?next=${encodeURIComponent(next)}` : ""}`);
         else setLoading(false);
       }}
     >

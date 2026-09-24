@@ -56,7 +56,18 @@ function lookingAt(platform: Platform | null): string {
   return "On regarde ce qu'il y a dans cette vidéo…";
 }
 
-export function AddFlow({ initialUrl = "", autoStart = false, onDone }: { initialUrl?: string; autoStart?: boolean; onDone?: () => void }) {
+export function AddFlow({
+  initialUrl = "",
+  autoStart = false,
+  onDone,
+  onBeforeSubmit,
+}: {
+  initialUrl?: string;
+  autoStart?: boolean;
+  onDone?: () => void;
+  /** Runs before the analysis starts (e.g. saving onboarding answers). */
+  onBeforeSubmit?: () => Promise<void>;
+}) {
   const router = useRouter();
   const [url, setUrl] = useState(initialUrl);
   const [showText, setShowText] = useState(false);
@@ -75,7 +86,11 @@ export function AddFlow({ initialUrl = "", autoStart = false, onDone }: { initia
   const platform = normalized ? detectPlatform(normalized) : null;
   const invalid = url.trim().length > 6 && !normalized;
 
-  useEffect(() => () => void (cancelled.current = true), []);
+  // Reset on (re)mount: React Strict Mode mounts twice in development.
+  useEffect(() => {
+    cancelled.current = false;
+    return () => void (cancelled.current = true);
+  }, []);
 
   // Reveal steps one by one, but never ahead of what the server really did.
   useEffect(() => {
@@ -123,6 +138,7 @@ export function AddFlow({ initialUrl = "", autoStart = false, onDone }: { initia
     setShownStep(0);
     setItemId(null);
     setPreview(null);
+    if (onBeforeSubmit) await onBeforeSubmit().catch(() => undefined);
     const res = await fetch("/api/analyze", {
       method: "POST",
       headers: { "content-type": "application/json" },

@@ -1,5 +1,5 @@
 import "server-only";
-import { limitsFor } from "@/config/plans";
+import { TRIAL, limitsFor } from "@/config/plans";
 import type { UserDataStore } from "@/db/types";
 import { env } from "@/lib/env";
 import { track } from "@/services/analytics";
@@ -38,15 +38,23 @@ export function getAnalysisProvider(): AnalysisProvider {
   return createAnthropicProvider() ?? new HeuristicProvider();
 }
 
+/** Free onboarding analysis: allowed until the user got one card (or used all attempts). */
+export async function isTrialAvailable(store: UserDataStore): Promise<boolean> {
+  const attempts = await store.countSourcesSince(new Date(0).toISOString());
+  if (attempts >= TRIAL.maxAttempts) return false;
+  const items = (await store.listItems({ savedOnly: false })).filter((i) => !i.isExample);
+  return items.length < TRIAL.maxItems;
+}
+
 /** Step 1–2 of the API: validate, check quota, create the source row. Fast. */
 export async function startAnalysis(store: UserDataStore, input: ContentInput): Promise<Source> {
   const url = normalizeInputUrl(input.url);
   if (!url) throw new PipelineError("invalid_url");
 
   const plan = await getPlan(store);
-  if (plan !== "PREMIUM") throw new PipelineError("subscription_required");
-  const used = await store.countSourcesSince(startOfMonthIso());
-  if (used >= limitsFor(plan).analysesPerMonth) {
+  if (plan !== "PREMIUM") {
+    if (!(await isTrialAvailable(store))) throw new PipelineError("subscription_required");
+  } else if ((await store.countSourcesSince(startOfMonthIso())) >= limitsFor(plan).analysesPerMonth) {
     throw new PipelineError("quota_exceeded");
   }
 

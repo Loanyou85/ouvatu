@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PREMIUM_OFFERS, formatPrice } from "@/config/plans";
 import { DemoCheckoutButton } from "@/features/paywall/demo-checkout";
 import { isMockBillingAllowed } from "@/lib/env";
+import { safeNextPath } from "@/lib/safe-next";
 
 /** Development stand-in for Stripe Checkout (never available when Stripe is configured). */
 export default async function DemoCheckoutPage(props: PageProps<"/premium/checkout-demo">) {
@@ -20,7 +21,7 @@ export default async function DemoCheckoutPage(props: PageProps<"/premium/checko
         <p className="mt-1 text-4xl font-extrabold tracking-tight">{formatPrice(offer.amountCents)}</p>
         <p className="text-sm text-muted">par {offer.unit}</p>
         <div className="mt-6">
-          <DemoCheckoutButton interval={interval} label="Simuler le paiement" />
+          <DemoCheckoutButton interval={interval} label="Simuler le paiement" next={safeNextPath(sp.next)} />
         </div>
       </div>
     </div>

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isMockBillingAllowed, isStripeConfigured } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
+import { safeNextPath } from "@/lib/safe-next";
 import { track } from "@/services/analytics";
 import { createCheckoutSession, explainStripeError } from "@/services/billing/stripe";
 import { getSessionUser } from "@/services/users/auth";
 
-const Body = z.object({ interval: z.enum(["week", "month", "year"]) });
+const Body = z.object({ interval: z.enum(["week", "month", "year"]), next: z.string().max(300).optional() });
 
 /** Public origin of the request (the site's real address, even if APP_URL is wrong). */
 function originOf(request: Request): string {
@@ -28,10 +29,11 @@ export async function POST(request: Request) {
   await track(user.id, "checkout_started", { interval: parsed.data.interval, provider: isStripeConfigured ? "stripe" : "mock" });
   try {
     if (isStripeConfigured) {
-      return NextResponse.json({ url: await createCheckoutSession(user, parsed.data.interval, originOf(request)) });
+      return NextResponse.json({ url: await createCheckoutSession(user, parsed.data.interval, originOf(request), safeNextPath(parsed.data.next)) });
     }
     if (isMockBillingAllowed) {
-      return NextResponse.json({ url: `/premium/checkout-demo?interval=${parsed.data.interval}` });
+      const next = safeNextPath(parsed.data.next);
+      return NextResponse.json({ url: `/premium/checkout-demo?interval=${parsed.data.interval}${next ? `&next=${encodeURIComponent(next)}` : ""}` });
     }
     return NextResponse.json(
       { error: "billing_unavailable", reason: "Stripe n'est pas configuré.", fix: "Ajoute STRIPE_SECRET_KEY et les 3 variables STRIPE_PRICE_PREMIUM_… dans Vercel, puis Redeploy." },

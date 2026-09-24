@@ -24,6 +24,13 @@ export const PLAN_LIMITS = {
   },
 } as const satisfies Record<PlanId, Record<string, number>>;
 
+/**
+ * Onboarding trial: before paying, a new user can analyse ONE link (a few
+ * attempts in case the first ones fail). The result is only shown blurred;
+ * seeing the full card leads to the paywall.
+ */
+export const TRIAL = { maxAttempts: 3, maxItems: 1 } as const;
+
 /** Features reserved to premium users. Checked server-side. */
 export const PREMIUM_FEATURES = ["itinerary", "unlimited_results"] as const;
 export type PremiumFeature = (typeof PREMIUM_FEATURES)[number];

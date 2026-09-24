@@ -4,10 +4,12 @@ import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { getAppContext } from "@/features/auth/context";
 import { RefreshSoon } from "@/features/paywall/refresh-soon";
+import { safeNextPath } from "@/lib/safe-next";
 
 export const metadata: Metadata = { title: "Bienvenue dans Premium" };
 
-export default async function PremiumSuccessPage() {
+export default async function PremiumSuccessPage(props: PageProps<"/premium/success">) {
+  const next = safeNextPath((await props.searchParams).next);
   const { plan } = await getAppContext();
   const active = plan === "PREMIUM";
   return (
@@ -20,8 +22,8 @@ export default async function PremiumSuccessPage() {
         {active ? "Ton espace est débloqué. Profite de tout ce qu'OUVATU détecte." : "On active ton abonnement… Cela prend généralement quelques secondes."}
       </p>
       {!active ? <RefreshSoon /> : null}
-      <Link href="/" className={buttonClass("dark", "lg", "mt-8")}>
-        Retour à mon espace
+      <Link href={next ?? "/"} className={buttonClass("dark", "lg", "mt-8")}>
+        {next ? "Voir ma fiche complète" : "Retour à mon espace"}
       </Link>
     </div>
   );

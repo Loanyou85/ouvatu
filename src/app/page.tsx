@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getAppContext } from "@/features/auth/context";
 import { HomeView } from "@/features/home/home-view";
 import { Landing } from "@/features/home/landing";
+import { isTrialAvailable } from "@/services/pipeline/analyze";
 import { getSessionUser } from "@/services/users/auth";
 
 export default async function RootPage() {
@@ -11,7 +12,7 @@ export default async function RootPage() {
 
   const { store, profile } = await getAppContext();
   if (!profile.onboardingCompleted) redirect("/onboarding");
-  if (profile.plan !== "PREMIUM") redirect("/premium");
+  if (profile.plan !== "PREMIUM") redirect((await isTrialAvailable(store)) ? "/onboarding" : "/premium");
   return (
     <AppShell profile={profile}>
       <HomeView store={store} profile={profile} />

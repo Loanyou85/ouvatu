@@ -5,6 +5,7 @@ import { buttonClass } from "@/components/ui/button";
 import { PLAN_LIMITS } from "@/config/plans";
 import { getAppContext } from "@/features/auth/context";
 import { PlanPicker } from "@/features/paywall/plan-picker";
+import { safeNextPath } from "@/lib/safe-next";
 import { track } from "@/services/analytics";
 
 export const metadata: Metadata = { title: "Premium" };
@@ -18,7 +19,8 @@ const FEATURES = [
 
 export default async function PremiumPage(props: PageProps<"/premium">) {
   const sp = await props.searchParams;
-  const { user, plan } = await getAppContext();
+  const { user, plan, store } = await getAppContext();
+  const next = safeNextPath(sp.next);
   if (plan !== "PREMIUM") await track(user.id, "paywall_viewed", { reason: typeof sp.reason === "string" ? sp.reason.slice(0, 30) : "page" });
 
   if (plan === "PREMIUM") {
@@ -29,12 +31,15 @@ export default async function PremiumPage(props: PageProps<"/premium">) {
         </div>
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Tu es Premium ✨</h1>
         <p className="mt-2 text-muted">Toutes les fonctionnalités d&apos;OUVATU sont débloquées.</p>
-        <Link href="/profile" className={buttonClass("dark", "lg", "mt-8")}>
-          Gérer mon abonnement
+        <Link href={next ?? "/profile"} className={buttonClass("dark", "lg", "mt-8")}>
+          {next ? "Voir ma fiche" : "Gérer mon abonnement"}
         </Link>
       </div>
     );
   }
+
+  // The card generated during onboarding, if any: reminds what is waiting behind the paywall.
+  const trialItem = (await store.listItems({ savedOnly: false }).catch(() => [])).find((i) => !i.isExample) ?? null;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 md:items-start md:gap-10 md:pt-6">
@@ -44,10 +49,26 @@ export default async function PremiumPage(props: PageProps<"/premium">) {
         </span>
         <h1 className="mt-4 text-[2.2rem] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-5xl">Débloque ton espace.</h1>
         <p className="mt-3 text-lg text-muted">Tout ce qu&apos;OUVATU détecte, sans limite.</p>
+        {trialItem ? (
+          <Link href={`/items/${trialItem.id}`} className="mt-5 flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card">
+            {trialItem.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={trialItem.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+            ) : (
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent-soft">
+                <Sparkles className="h-5 w-5 text-accent-strong" />
+              </span>
+            )}
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold text-muted">Ta fiche t&apos;attend</span>
+              <span className="line-clamp-1 font-bold">{trialItem.title}</span>
+            </span>
+          </Link>
+        ) : null}
         {sp.canceled ? <p className="mt-4 rounded-2xl bg-hover px-4 py-3 text-sm">Paiement annulé. Tu peux réessayer quand tu veux.</p> : null}
       </div>
       <div className="rounded-[1.75rem] bg-card p-5 shadow-float sm:p-6 animate-fade-up [animation-delay:100ms] md:col-start-2 md:row-start-1 md:row-span-3">
-        <PlanPicker />
+        <PlanPicker next={next ?? (trialItem ? `/items/${trialItem.id}` : null)} />
       </div>
       <div className="animate-fade-up md:col-start-1">
         <ul className="space-y-4">

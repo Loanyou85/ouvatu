@@ -101,7 +101,7 @@ export async function checkStripePrices(): Promise<{ interval: BillingInterval; 
   return results;
 }
 
-export async function createCheckoutSession(user: { id: string; email: string }, interval: BillingInterval, origin: string = env.appUrl): Promise<string> {
+export async function createCheckoutSession(user: { id: string; email: string }, interval: BillingInterval, origin: string = env.appUrl, next: string | null = null): Promise<string> {
   if (!isStripeConfigured) throw new Error("Stripe is not configured");
   const stripe = getStripe();
   const admin = getAdminStore();
@@ -115,7 +115,7 @@ export async function createCheckoutSession(user: { id: string; email: string },
     subscription_data: { metadata: { userId: user.id } },
     allow_promotion_codes: true,
     locale: "fr",
-    success_url: `${origin}/premium/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}/premium/success?session_id={CHECKOUT_SESSION_ID}${next ? `&next=${encodeURIComponent(next)}` : ""}`,
     cancel_url: `${origin}/premium?canceled=1`,
   });
   if (!session.url) throw new Error("Stripe did not return a checkout URL");
