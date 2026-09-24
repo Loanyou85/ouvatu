@@ -14,7 +14,7 @@ import type { AnalysisProvider } from "./types";
 const KEYWORDS: Record<Exclude<Category, "OTHER">, string[]> = {
   RECIPES: ["recette", "recipe", "ingredient", "ingredients", "cuisson", "four", "farine", "pates", "pasta", "sauce", "gateau", "cuire", "poeler", "melanger", "cuillere", "foodtok", "cooking", "dessert", "gramme"],
   TRAVEL: ["voyage", "travel", "visiter", "visit", "itineraire", "jours", "days", "destination", "vacances", "roadtrip", "traveltok", "trip", "que faire", "things to do", "week-end", "weekend", "city guide"],
-  PLACES: ["restaurant", "cafe", "bar", "brunch", "adresse", "spot", "boulangerie", "rooftop", "coffee", "bistrot", "pizzeria", "ramen", "sushi", "patisserie"],
+  PLACES: ["restaurant", "cafe", "bar", "brunch", "adresse", "spot", "park", "parc", "plage", "beach", "musee", "museum", "thingstodo", "hidden gem", "a faire", "boulangerie", "rooftop", "coffee", "bistrot", "pizzeria", "ramen", "sushi", "patisserie"],
   PRODUCTS: ["produit", "product", "acheter", "buy", "prix", "price", "promo", "review", "test", "unboxing", "skincare", "serum", "creme", "gadget", "amazon", "haul", "favoris", "routine beaute"],
   MOVIES: ["film", "films", "movie", "movies", "cinema", "netflix", "realisateur", "thriller", "filmtok", "a voir", "must watch"],
   SERIES: ["serie", "series", "saison", "season", "episode", "binge", "tv show"],
@@ -57,13 +57,18 @@ const CITIES: Record<string, { city: string; country: string }> = {
   istanbul: { city: "Istanbul", country: "Turquie" },
   athenes: { city: "Athènes", country: "Grèce" },
   "new york": { city: "New York", country: "États-Unis" },
-  nyc: { city: "New York", country: "États-Unis" },
+  toronto: { city: "Toronto", country: "Canada" },
   montreal: { city: "Montréal", country: "Canada" },
+  vancouver: { city: "Vancouver", country: "Canada" },
+  "los angeles": { city: "Los Angeles", country: "États-Unis" },
+  miami: { city: "Miami", country: "États-Unis" },
+  chicago: { city: "Chicago", country: "États-Unis" },
+  dubai: { city: "Dubaï", country: "Émirats arabes unis" },
+  nyc: { city: "New York", country: "États-Unis" },
   copenhague: { city: "Copenhague", country: "Danemark" },
   prague: { city: "Prague", country: "Tchéquie" },
   vienne: { city: "Vienne", country: "Autriche" },
   budapest: { city: "Budapest", country: "Hongrie" },
-  dubai: { city: "Dubaï", country: "Émirats arabes unis" },
   mexico: { city: "Mexico", country: "Mexique" },
 };
 
@@ -87,7 +92,14 @@ const UNITS = ["kg", "g", "gr", "mg", "l", "cl", "ml", "dl", "c. a soupe", "c. a
 function scoreCategories(corpus: string, hashtags: string[]): [Category, number][] {
   const text = ` ${normalizeText(corpus)} ${hashtags.join(" ")} `;
   return (Object.entries(KEYWORDS) as [Category, string[]][])
-    .map(([cat, words]) => [cat, words.reduce((acc, w) => acc + (text.includes(` ${w}`) ? 1 : 0), 0)] as [Category, number])
+    .map(([cat, words]) => {
+      const score = words.reduce((acc, w) => {
+        if (text.includes(` ${w}`)) return acc + 1;
+        // Compound hashtags (#torontothingstodo, #biidaasigepark) hide keywords inside a single word.
+        return w.length >= 4 && !w.includes(" ") && hashtags.some((h) => h.includes(w)) ? acc + 1 : acc;
+      }, 0);
+      return [cat, score] as [Category, number];
+    })
     .sort((a, b) => b[1] - a[1]);
 }
 

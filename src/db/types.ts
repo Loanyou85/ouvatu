@@ -56,6 +56,7 @@ export type ItemPatch = Partial<{
   /** Structured content edited by the user (e.g. places added by hand). */
   data: StructuredData;
   entities: Entity[];
+  category: Category;
   title: string;
   isSaved: boolean;
   isFavorite: boolean;

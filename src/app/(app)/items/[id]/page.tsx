@@ -6,6 +6,7 @@ import { CategoryBadge } from "@/components/ui/badge";
 import { ItemImage } from "@/components/ui/item-image";
 import { requireOnboardedContext } from "@/features/auth/context";
 import { LockedPreview } from "@/features/items/locked-preview";
+import { ConvertToPlaces } from "@/features/items/views/category-fix";
 import { ItemToolbar, SaveBar } from "@/features/items/item-toolbar";
 import { BooksView, DecorView, FashionView, FitnessView, OtherView, ProductsView, ScreenView } from "@/features/items/views/collection-views";
 import type { EntryState } from "@/features/items/views/list-toggle";
@@ -31,6 +32,9 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
   if (plan !== "PREMIUM") return <LockedPreview item={item} />;
 
   const view = toItemView(item, plan);
+  // Cards built without the AI (key missing / rejected): say it, so the owner can fix the setup.
+  const source = item.sourceId && !item.isExample ? await store.getSource(item.sourceId).catch(() => null) : null;
+  const simplified = source?.rawMetadata?.analyzer === "heuristic";
   const [collections, saved] = await Promise.all([store.listCollections(), store.listSaved()]);
   const entries: Record<string, EntryState> = {};
   for (const s of saved.filter((s) => s.contentItemId === id)) entries[String(s.entityRef ?? "item")] = { id: s.id, done: s.status === "done" };
@@ -102,6 +106,22 @@ export default async function ItemPage(props: PageProps<"/items/[id]">) {
                   #{t}
                 </Link>
               ))}
+            </div>
+          ) : null}
+
+          {simplified ? (
+            <div className="mt-6 rounded-2xl bg-hover p-4 text-sm">
+              <p className="font-bold">Analyse simplifiée (sans IA)</p>
+              <p className="mt-0.5 text-muted">
+                L&apos;IA n&apos;a pas pu être utilisée pour cette fiche : la catégorie et les détails peuvent être imprécis.
+                {typeof source?.rawMetadata?.aiError === "string" ? ` Raison : ${source.rawMetadata.aiError}` : " Vérifie la ligne « IA » sur /setup."}
+              </p>
+            </div>
+          ) : null}
+          {d.category !== "TRAVEL" && d.category !== "PLACES" && !view.isExample ? (
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted">Mauvaise catégorie ?</span>
+              <ConvertToPlaces itemId={view.id} />
             </div>
           ) : null}
 
