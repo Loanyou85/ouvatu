@@ -4,7 +4,7 @@ import type { UserDataStore } from "@/db/types";
 import { env } from "@/lib/env";
 import { track } from "@/services/analytics";
 import { getPlan, startOfMonthIso } from "@/services/billing/entitlements";
-import { createAnthropicProvider, readCoverText } from "@/services/content-analysis/providers/anthropic";
+import { createAnthropicProvider, readCoverText, readVideoFrames } from "@/services/content-analysis/providers/anthropic";
 import { HeuristicProvider } from "@/services/content-analysis/providers/heuristic";
 import { AnalysisError, type AnalysisProvider } from "@/services/content-analysis/providers/types";
 import { envelopeToResult } from "@/services/content-analysis/normalize";
@@ -80,8 +80,27 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
     try {
       content = await ingestUrl(source.url, input.sharedText ?? null);
     } catch (error) {
-      if (error instanceof IngestionError) throw new PipelineError(error.code === "empty" ? "empty" : "unreachable", error.message);
-      throw new PipelineError("unreachable", error instanceof Error ? error.message : undefined);
+      if (!input.frames?.length) {
+        if (error instanceof IngestionError) throw new PipelineError(error.code === "empty" ? "empty" : "unreachable", error.message);
+        throw new PipelineError("unreachable", error instanceof Error ? error.message : undefined);
+      }
+      // The link gave nothing, but the user provided the video itself: analyse its frames.
+      content = {
+        url: source.url,
+        platform: source.platform,
+        title: null,
+        description: null,
+        text: null,
+        author: null,
+        siteName: null,
+        thumbnailUrl: null,
+        publishedAt: null,
+        hashtags: [],
+        jsonLd: [],
+        userText: input.sharedText ?? null,
+        retrieval: "minimal",
+        raw: { ingestionError: error instanceof Error ? error.message : "unknown" },
+      };
     }
     await store.updateSource(source.id, {
       title: content.title,
@@ -94,16 +113,20 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
       analysisStep: 1,
     });
 
-    // Social posts: the cover image often lists the places / products shown in the video.
-    if (content.thumbnailUrl && content.platform !== "web" && env.aiApiKey && env.aiProvider !== "heuristic") {
-      const cover = await safeFetch(content.thumbnailUrl, { timeoutMs: 8000, maxBytes: 4_500_000, accept: "image/*" }).catch(() => null);
-      if (cover && cover.status < 400) {
-        content.coverText = await readCoverText(cover.bytes, cover.contentType);
-        if (content.coverText) {
-          content.raw.coverText = content.coverText;
-          if (content.retrieval === "minimal") content.retrieval = "partial";
-        }
-      }
+    // What the video shows: frames provided by the user + the public cover image
+    // (covers often list the places). Both read by the AI, in parallel.
+    if (env.aiApiKey && env.aiProvider !== "heuristic") {
+      const readCover = async () => {
+        if (!content.thumbnailUrl || content.platform === "web") return null;
+        const cover = await safeFetch(content.thumbnailUrl, { timeoutMs: 8000, maxBytes: 4_500_000, accept: "image/*" }).catch(() => null);
+        return cover && cover.status < 400 ? readCoverText(cover.bytes, cover.contentType) : null;
+      };
+      const [coverText, videoText] = await Promise.all([readCover(), input.frames?.length ? readVideoFrames(input.frames) : null]);
+      content.coverText = coverText;
+      content.videoText = videoText;
+      if (coverText) content.raw.coverText = coverText;
+      if (videoText) content.raw.videoText = videoText;
+      if ((coverText || videoText) && content.retrieval !== "rich") content.retrieval = videoText ? "rich" : "partial";
     }
 
     let provider = getAnalysisProvider();

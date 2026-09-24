@@ -41,7 +41,7 @@ export const LEGAL_PAGES: Record<string, LegalPage> = {
         heading: "Contenus externes",
         body: [
           "Nous ne récupérons que des informations publiquement accessibles (métadonnées officielles, balises publiques des pages). Nous ne conservons pas le texte intégral des pages analysées : seuls la fiche générée et quelques métadonnées légères sont stockées.",
-          "Le texte analysé peut être transmis à notre fournisseur d'IA pour produire la fiche. Il n'est pas utilisé pour entraîner des modèles selon les conditions de ce fournisseur.",
+          "Le texte analysé, et les images extraites d'une vidéo que tu ajoutes volontairement, peuvent être transmis à notre fournisseur d'IA pour produire la fiche. Les images ne sont pas conservées par OUVATU et ne sont pas utilisées pour entraîner des modèles selon les conditions de ce fournisseur.",
         ],
       },
       {

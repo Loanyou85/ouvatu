@@ -11,6 +11,14 @@ export const ContentInputSchema = z.object({
   url: z.string().trim().min(4).max(2048),
   /** Text shared alongside the URL (e.g. a caption), or pasted by the user. */
   sharedText: z.string().trim().max(5000).optional(),
+  /**
+   * Frames of the video (or screenshots) provided by the user, as small JPEG
+   * data URLs extracted in the browser. Used to find places shown on screen.
+   */
+  frames: z
+    .array(z.string().regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/).max(600_000))
+    .max(10)
+    .optional(),
 });
 export type ContentInput = z.infer<typeof ContentInputSchema>;
 
@@ -32,6 +40,8 @@ export interface NormalizedContent {
   userText: string | null;
   /** Text written on the public cover image (read by the AI), e.g. "5 spots à Toronto : …". */
   coverText?: string | null;
+  /** Text and places seen in the video frames provided by the user. */
+  videoText?: string | null;
   /** What we could access, used to be transparent in the UI. */
   retrieval: "rich" | "partial" | "minimal";
   raw: Record<string, unknown>;
@@ -40,7 +50,7 @@ export interface NormalizedContent {
 export function contentCorpus(content: NormalizedContent): string {
   // Hashtags count as real content: #biidaasigepark names a place, #toronto a city.
   const hashtags = content.hashtags.length ? content.hashtags.join(" ") : null;
-  return [content.title, content.description, content.text, content.userText, content.coverText, hashtags, content.author]
+  return [content.title, content.description, content.text, content.userText, content.coverText, content.videoText, hashtags, content.author]
     .filter(Boolean)
     .join("\n");
 }

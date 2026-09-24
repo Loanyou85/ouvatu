@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, ClipboardPaste, Link2, Plus, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ClipboardPaste, Film, Link2, Plus, RotateCcw, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import { Button, buttonClass } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { ANALYSIS_ERRORS } from "@/config/messages";
 import { trackClient } from "@/lib/client/analytics";
+import { filesToFrames } from "@/lib/client/frames";
 import { cn } from "@/lib/utils";
 import { PLATFORM_LABEL, detectPlatform, normalizeInputUrl } from "@/services/content-ingestion/url";
 import type { Platform } from "@/types/schemas";
@@ -73,6 +74,23 @@ export function AddFlow({
   const [url, setUrl] = useState(initialUrl);
   const [showText, setShowText] = useState(false);
   const [sharedText, setSharedText] = useState("");
+  const [frames, setFrames] = useState<string[]>([]);
+  const [framesState, setFramesState] = useState<"idle" | "working" | "error">("idle");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onFiles(list: FileList | null) {
+    const files = list ? [...list] : [];
+    if (files.length === 0) return;
+    setFramesState("working");
+    try {
+      const out = await filesToFrames(files);
+      setFrames(out);
+      setFramesState(out.length ? "idle" : "error");
+    } catch {
+      setFrames([]);
+      setFramesState("error");
+    }
+  }
   const [phase, setPhase] = useState<Phase>("idle");
   const [actualStep, setActualStep] = useState(0);
   const [shownStep, setShownStep] = useState(0);
@@ -143,7 +161,12 @@ export function AddFlow({
     const res = await fetch("/api/analyze", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url: normalized, channel: "paste", ...(sharedText.trim() ? { sharedText: sharedText.trim() } : {}) }),
+      body: JSON.stringify({
+        url: normalized,
+        channel: "paste",
+        ...(sharedText.trim() ? { sharedText: sharedText.trim() } : {}),
+        ...(frames.length ? { frames } : {}),
+      }),
     }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { sourceId?: string; error?: string } | null;
     if (!res || !res.ok || !data?.sourceId) {
@@ -274,6 +297,50 @@ export function AddFlow({
         </div>
       </div>
 
+      <div className="rounded-2xl border border-dashed border-line p-3.5">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="video/*,image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void onFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        {frames.length ? (
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-3">
+              {frames.slice(0, 4).map((f, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={f} alt="" className="h-11 w-8 rounded-md border-2 border-card object-cover" />
+              ))}
+            </div>
+            <p className="flex-1 text-sm font-semibold text-success">
+              Vidéo ajoutée ✓ <span className="font-normal text-muted">({frames.length} images analysées)</span>
+            </p>
+            <button type="button" onClick={() => setFrames([])} aria-label="Retirer la vidéo" className="grid h-8 w-8 place-items-center rounded-full hover:bg-hover">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={framesState === "working"} className="flex w-full items-center gap-3 text-left disabled:opacity-60">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-strong">
+              <Film className="h-5 w-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold">{framesState === "working" ? "Préparation de la vidéo…" : "Ajouter la vidéo (recommandé)"}</span>
+              <span className="block text-xs text-muted">
+                {framesState === "error"
+                  ? "Vidéo illisible : essaie avec des captures d'écran."
+                  : "Enregistre la vidéo sur ton téléphone puis ajoute-la : l'IA repère tous les lieux qu'elle montre."}
+              </span>
+            </span>
+          </button>
+        )}
+      </div>
+
       {showText ? (
         <div className="animate-fade-up">
           <Textarea
@@ -290,12 +357,12 @@ export function AddFlow({
         </button>
       )}
 
-      <Button type="submit" variant="accent" size="lg" className="w-full" disabled={!url.trim()}>
+      <Button type="submit" variant="accent" size="lg" className="w-full" disabled={!url.trim() || framesState === "working"}>
         {phase === "error" ? <RotateCcw className="h-5 w-5" /> : null}
         {phase === "error" ? "Réessayer" : "Analyser"}
         {phase !== "error" ? <ArrowRight className="h-5 w-5" /> : null}
       </Button>
-      <p className="text-center text-xs text-subtle">OUVATU lit uniquement les informations publiques du lien.</p>
+      <p className="text-center text-xs text-subtle">OUVATU lit les informations publiques du lien et la vidéo que tu ajoutes (jamais conservée).</p>
     </form>
   );
 }

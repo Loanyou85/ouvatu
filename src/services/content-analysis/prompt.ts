@@ -50,6 +50,7 @@ export function buildUserPrompt(content: NormalizedContent): string {
   if (content.siteName) data.push(`Site : ${content.siteName}`);
   if (content.description) data.push(`Description :\n${content.description}`);
   if (content.hashtags.length) data.push(`Hashtags : ${content.hashtags.map((h) => `#${h}`).join(" ")}`);
+  if (content.videoText) data.push(`Ce qu'on voit dans la vidéo (texte à l'écran, lieux reconnus sur les images) :\n${content.videoText}`);
   if (content.coverText) data.push(`Texte écrit sur l'image de couverture :\n${content.coverText}`);
   if (content.userText) data.push(`Texte ajouté par l'utilisateur :\n${content.userText}`);
   const ld = compactJsonLd(content.jsonLd);

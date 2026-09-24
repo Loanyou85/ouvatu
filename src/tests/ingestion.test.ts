@@ -78,3 +78,13 @@ describe("html ingestion", () => {
     expect(cleanText("a\u0000b\n\n\n\nc")).toBe("a b\n\nc");
   });
 });
+
+describe("video frames input", () => {
+  it("accepts small JPEG data URLs only, 10 max", async () => {
+    const { ContentInputSchema } = await import("@/services/content-ingestion/types");
+    const frame = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+    expect(ContentInputSchema.safeParse({ url: "https://www.tiktok.com/@a/video/1", frames: [frame] }).success).toBe(true);
+    expect(ContentInputSchema.safeParse({ url: "https://www.tiktok.com/@a/video/1", frames: ["data:text/html;base64,PGgxPg=="] }).success).toBe(false);
+    expect(ContentInputSchema.safeParse({ url: "https://www.tiktok.com/@a/video/1", frames: Array(11).fill(frame) }).success).toBe(false);
+  });
+});
