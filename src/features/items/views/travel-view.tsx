@@ -1,0 +1,129 @@
+"use client";
+
+import { MapIcon, Route, Sparkles } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { placeBreakdown, PLACE_KIND_LABEL } from "@/services/travel/stats";
+import type { Itinerary } from "@/types/domain";
+import type { Place } from "@/types/schemas";
+import { generateItineraryAction } from "../actions";
+import { useServerAction } from "../use-action";
+import { PlaceList } from "./place-list";
+import { Block, Fact, LockedPreview } from "./shared";
+
+const MapView = dynamic(() => import("./map-view").then((m) => m.MapView), {
+  ssr: false,
+  loading: () => <Skeleton className="h-72 w-full rounded-card" />,
+});
+
+export function TravelView({
+  itemId,
+  places,
+  lockedCount,
+  itinerary,
+  canItinerary,
+  facts,
+}: {
+  itemId: string;
+  places: Place[];
+  lockedCount: number;
+  itinerary: Itinerary | null;
+  canItinerary: boolean;
+  facts?: { label: string; value: string | null }[];
+}) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [day, setDay] = useState(0);
+  const { pending, run } = useServerAction();
+  const breakdown = placeBreakdown(places);
+  const located = places.filter((p) => p.geo).length;
+  const activeDay = itinerary?.days[day];
+
+  return (
+    <div className="space-y-8">
+      {facts?.length ? (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {facts.map((f) => (
+            <Fact key={f.label} label={f.label} value={f.value} />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        {breakdown.map((b) => (
+          <span key={b.kind} className="rounded-full bg-card px-3 py-1.5 text-sm font-semibold shadow-card">
+            {PLACE_KIND_LABEL[b.kind].emoji} {b.label}
+          </span>
+        ))}
+        {lockedCount ? <span className="rounded-full bg-ink px-3 py-1.5 text-sm font-semibold text-white">🔒 +{lockedCount}</span> : null}
+      </div>
+
+      <div className="grid gap-2.5 sm:flex">
+        <Button variant="dark" size="lg" onClick={() => mapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+          <MapIcon className="h-5 w-5" /> Voir la carte
+        </Button>
+        <Button
+          variant={canItinerary ? "accent" : "soft"}
+          size="lg"
+          loading={pending}
+          onClick={() => run(() => generateItineraryAction(itemId, itinerary?.days.length ?? 0), () => setDay(0))}
+        >
+          {canItinerary ? <Route className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+          {itinerary ? "Recalculer l'itinéraire" : "Créer mon itinéraire"}
+        </Button>
+      </div>
+
+      {itinerary && itinerary.days.length ? (
+        <Block title="Mon itinéraire">
+          <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            {itinerary.days.map((d, i) => (
+              <button
+                key={d.day}
+                onClick={() => setDay(i)}
+                className={cn("shrink-0 rounded-full px-4 py-2 text-sm font-bold transition", i === day ? "bg-ink text-white" : "bg-card shadow-card hover:bg-hover")}
+              >
+                Jour {d.day}
+              </button>
+            ))}
+          </div>
+          {activeDay ? (
+            <ol className="relative space-y-3 border-l-2 border-dashed border-line pl-5">
+              {activeDay.stops.map((stop) => (
+                <li key={`${stop.time}-${stop.placeIndex}`} className="relative animate-fade-up">
+                  <span className="absolute -left-[1.72rem] top-3.5 h-3 w-3 rounded-full border-2 border-bg bg-accent" />
+                  <div className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card">
+                    <span className="w-14 shrink-0 font-extrabold tabular-nums text-accent-strong">{stop.time}</span>
+                    <span className="text-lg" aria-hidden>
+                      {PLACE_KIND_LABEL[stop.kind as Place["kind"]]?.emoji ?? "📍"}
+                    </span>
+                    <span className="font-semibold">{stop.name}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {itinerary.unplaced.length ? (
+            <p className="mt-4 text-sm text-muted">
+              À placer librement : {itinerary.unplaced.map((u) => u.name).join(", ")}
+              {" "}(position inconnue ou journée complète).
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-subtle">Horaires indicatifs. Les lieux proches sont regroupés le même jour.</p>
+        </Block>
+      ) : null}
+
+      <div ref={mapRef}>
+        <Block title="Carte" action={<span className="text-xs font-semibold text-muted">{located}/{places.length} lieux localisés</span>}>
+          <MapView places={places} highlight={activeDay?.stops.map((s) => s.placeIndex)} className="h-72 w-full overflow-hidden rounded-card shadow-card sm:h-96" />
+        </Block>
+      </div>
+
+      <Block title="Lieux détectés">
+        <PlaceList places={places} />
+        <LockedPreview count={lockedCount} noun="lieu" plural="lieux" />
+      </Block>
+    </div>
+  );
+}
