@@ -65,7 +65,7 @@ Toutes sont documentées dans [`.env.example`](.env.example). Les secrets ne son
 
 ## 4. Migrations
 
-Le schéma complet est dans `supabase/migrations/20260924000000_init.sql` :
+Le schéma est dans `supabase/migrations/` (à exécuter dans l'ordre : `…init.sql`, `…weekly_plan.sql`, `…grants.sql`) :
 
 - tables : `users`, `subscriptions`, `sources`, `content_items`, `entities`, `collections`, `collection_items`,
   `recipes`, `recipe_ingredients`, `recipe_steps`, `trips`, `trip_locations`, `places`, `products`, `movies`,

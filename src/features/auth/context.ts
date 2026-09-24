@@ -28,7 +28,9 @@ export const getAppContext = cache(async () => {
     profile = await store.getProfile();
   } catch (error) {
     console.error("[auth] could not load the profile (database not ready?)", error);
-    redirect("/setup");
+    // Short, non-secret reason (e.g. "permission denied for table users") shown on /setup.
+    const reason = (error instanceof Error ? error.message : "unknown").replace(/^\[supabase\]\s*/, "").slice(0, 160);
+    redirect(`/setup?reason=${encodeURIComponent(reason)}`);
   }
   if (!profile && (await ensureProfile(user.id, user.email))) profile = await store.getProfile();
   if (!profile) redirect("/logout");
