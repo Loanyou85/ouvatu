@@ -21,6 +21,13 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/analyze/[id
     platform: source.platform,
     title: source.title,
     thumbnailUrl: source.thumbnailUrl,
-    error: source.analysisStatus === "failed" ? analysisErrorCopy(source.analysisError) : null,
+    error:
+      source.analysisStatus === "failed"
+        ? {
+            ...analysisErrorCopy(source.analysisError),
+            // Technical reason, shown small under the message (helps support; no secrets in it).
+            detail: source.analysisError?.split(":").slice(1).join(":").trim().slice(0, 240) || null,
+          }
+        : null,
   });
 }

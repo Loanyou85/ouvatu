@@ -2,7 +2,7 @@ import "server-only";
 import { env } from "@/lib/env";
 import type { Platform } from "@/types/schemas";
 import { cleanText, parseHtmlMetadata, type HtmlMetadata } from "./html";
-import { safeFetch, safeFetchJson } from "./safe-fetch";
+import { resolveRedirects, safeFetch, safeFetchJson } from "./safe-fetch";
 import type { NormalizedContent } from "./types";
 import { detectPlatform } from "./url";
 
@@ -81,10 +81,32 @@ export class IngestionError extends Error {
   }
 }
 
+/** Share short links: oEmbed endpoints expect the full post URL. */
+const SHORT_LINK_HOSTS = /^(vm|vt)\.tiktok\.com$|^pin\.it$/i;
+
+function stripTracking(raw: string): string {
+  try {
+    const u = new URL(raw);
+    if (detectPlatform(raw) === "tiktok") u.search = "";
+    return u.toString();
+  } catch {
+    return raw;
+  }
+}
+
 export async function ingestUrl(inputUrl: string, userText: string | null): Promise<NormalizedContent> {
   let url = inputUrl;
-  let platform = detectPlatform(url);
   const raw: Record<string, unknown> = {};
+  try {
+    if (SHORT_LINK_HOSTS.test(new URL(url).hostname)) {
+      const resolved = stripTracking(await resolveRedirects(url));
+      if (resolved !== url) raw.resolvedFrom = url;
+      url = resolved;
+    }
+  } catch {
+    // keep the original URL
+  }
+  let platform = detectPlatform(url);
 
   const oembedUrl = OEMBED_ENDPOINT[platform]?.(url) ?? null;
   const [oembed, html, yt] = await Promise.all([
@@ -120,7 +142,9 @@ export async function ingestUrl(inputUrl: string, userText: string | null): Prom
     throw new IngestionError("Nothing retrievable from this URL", raw.htmlError ? "unreachable" : "empty");
   }
 
-  const richness = [description, text, cleanedUserText, html?.jsonLd?.length ? "ld" : null].filter(Boolean).length;
+  // On TikTok / Instagram the oEmbed "title" is the post caption: real content, not just a title.
+  const caption = platform === "tiktok" || platform === "instagram" ? title : null;
+  const richness = [description ?? caption, text, cleanedUserText, html?.jsonLd?.length ? "ld" : null].filter(Boolean).length;
   return {
     url: html?.canonical && detectPlatform(html.canonical) === platform ? html.canonical : url,
     platform,

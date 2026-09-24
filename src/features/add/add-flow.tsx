@@ -17,6 +17,7 @@ interface ErrorCopy {
   code: string;
   title: string;
   hint: string;
+  detail?: string | null;
 }
 
 const STEPS = ["Contenu récupéré", "Sujet identifié", "Informations extraites", "Catégorie détectée", "Fiche créée"];
@@ -225,6 +226,7 @@ export function AddFlow({
         <div className="rounded-2xl bg-error-soft px-4 py-3.5" role="alert">
           <p className="font-bold text-error">{error.title}</p>
           <p className="mt-0.5 text-sm text-ink/80">{error.hint}</p>
+          {error.detail ? <p className="mt-2 break-words text-[0.7rem] leading-snug text-ink/45">Détail : {error.detail}</p> : null}
           {error.code === "subscription_required" ? (
             <Link href="/premium" onClick={onDone} className={buttonClass("accent", "sm", "mt-3")}>
               Débloquer mon espace

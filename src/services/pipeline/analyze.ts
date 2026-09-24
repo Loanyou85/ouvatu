@@ -94,21 +94,25 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
     });
 
     let provider = getAnalysisProvider();
-    let envelope;
+    let aiError: string | null = null;
+    let validated;
     try {
-      envelope = await provider.analyze(content);
+      validated = envelopeToResult(await provider.analyze(content));
     } catch (error) {
-      if (error instanceof AnalysisError && error.code === "unavailable" && provider.name !== "heuristic") {
-        console.warn("[pipeline] AI provider unavailable, falling back to heuristic analyzer:", error.message);
+      // AI down, key rejected, request refused by the API (400) or unusable output:
+      // the rule-based analyzer still builds a card from the same public data.
+      const recoverable = error instanceof AnalysisError && error.code !== "refused";
+      if (recoverable && provider.name !== "heuristic") {
+        aiError = `${error.code}: ${error.message}`.slice(0, 300);
+        console.warn("[pipeline] AI analysis failed, falling back to heuristic analyzer:", aiError);
         provider = new HeuristicProvider();
-        envelope = await provider.analyze(content);
+        validated = envelopeToResult(await provider.analyze(content));
       } else {
         throw error;
       }
     }
     await store.updateSource(source.id, { analysisStep: 2 });
 
-    const validated = envelopeToResult(envelope);
     const grounded = applyGrounding(validated, contentCorpus(content));
     await store.updateSource(source.id, { analysisStatus: "enriching", analysisStep: 3 });
 
@@ -116,7 +120,10 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
     await store.updateSource(source.id, { analysisStep: 4 });
 
     if (enriched.category === "OTHER" && content.retrieval === "minimal" && !content.userText) {
-      throw new PipelineError("not_understood", "Too little public information to build a useful card");
+      throw new PipelineError(
+        "not_understood",
+        `Too little public information to build a useful card (retrieval: ${content.retrieval}, analyzer: ${provider.name}${aiError ? `, AI: ${aiError}` : ""})`,
+      );
     }
 
     const item = await store.createItem({
@@ -142,6 +149,7 @@ export async function runAnalysis(store: UserDataStore, source: Source, input: C
         retrieval: content.retrieval,
         hashtags: content.hashtags,
         analyzer: provider.name,
+        ...(aiError ? { aiError } : {}),
       },
     });
     await store.incrementAnalysisCount();

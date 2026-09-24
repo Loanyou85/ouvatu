@@ -58,3 +58,18 @@ export class AnthropicProvider implements AnalysisProvider {
 export function createAnthropicProvider(): AnthropicProvider | null {
   return env.aiApiKey ? new AnthropicProvider(env.aiApiKey, env.aiModel) : null;
 }
+
+/** Diagnostic: checks the key and the model name without generating anything (Models API). */
+export async function checkAnthropicSetup(): Promise<{ ok: boolean; detail: string; fix?: string }> {
+  if (!env.aiApiKey) return { ok: false, detail: "non configurée (analyseur de secours, résultats limités)", fix: "console.anthropic.com → API Keys → Create Key → colle-la dans AI_API_KEY" };
+  try {
+    const model = await new Anthropic({ apiKey: env.aiApiKey, timeout: 10_000, maxRetries: 0 }).models.retrieve(env.aiModel);
+    return { ok: true, detail: `OK (${model.display_name ?? model.id})` };
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError) return { ok: false, detail: "clé refusée par Anthropic", fix: "Recopie AI_API_KEY (commence par sk-ant-), sans espace, puis Redeploy" };
+    if (error instanceof Anthropic.PermissionDeniedError) return { ok: false, detail: "clé sans accès à l'API", fix: "console.anthropic.com → vérifie ton organisation et tes crédits (Billing)" };
+    if (error instanceof Anthropic.NotFoundError) return { ok: false, detail: `modèle « ${env.aiModel} » introuvable`, fix: "Supprime la variable AI_MODEL (le modèle par défaut sera utilisé), puis Redeploy" };
+    if (error instanceof Anthropic.APIError) return { ok: false, detail: `erreur Anthropic ${error.status}`, fix: "Réessaie dans quelques minutes" };
+    return { ok: false, detail: "Anthropic injoignable", fix: "Réessaie dans quelques minutes" };
+  }
+}
